@@ -86,7 +86,7 @@ export class PublicComponent implements OnInit {
         });
     }
 
-    // after calling signInWithLinkedIn you nee to validate 'code'
+    // after calling "signInWithLinkedIn()" call "validateLinkedInSignIn(code)" to validate the'code'
     // from the 'redirectUri'
     ngOnInit(): void {
         const code = this.activatedRoute.snapshot.queryParamMap.get('code');
@@ -98,7 +98,7 @@ export class PublicComponent implements OnInit {
                     window.close();
                 },
                 error: () => {
-                     window.close();
+                    swindow.close();
                 }
             });
         }
