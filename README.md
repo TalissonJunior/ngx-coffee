@@ -254,7 +254,7 @@ export class PublicComponent implements OnInit {
     }
 
     private deleteData(): void {
-        this.coffeeService.delte('user', 1)
+        this.coffeeService.delete('user', 1)
         .subscribe({
             next: () => {
                 // do something here
