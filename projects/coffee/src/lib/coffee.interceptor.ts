@@ -44,11 +44,11 @@ export class CoffeeInterceptor implements HttpInterceptor {
           if (response instanceof HttpErrorResponse) {
             // Forbidden user, insufficient privileges
             if (response.status === 403 || response.status !== 401) {
-              return await lastValueFrom(throwError(() => new Error(error)));
+              return await lastValueFrom(throwError(() => error));
             }
           }
 
-          return await lastValueFrom(throwError(() => new Error(error)));
+          return await lastValueFrom(throwError(() => error));
         })
       );
   }

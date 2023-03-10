@@ -27,22 +27,21 @@ export class CoffeeAuthRequest<T> {
     }
 
     /**
-     * Authenticate by Login and password, it will use "auth/authenticate" 
+     * Authenticate by Login and password, it will use "user/authenticate" 
      * endpoint, this endpoint must return { user: ..., token: .... }
      */
     siginWithLoginPassword(auth: CoffeeAuth): Observable<T> {
         const baseEndPoint = this.config ? this.config.baseApiUrl : "";
 
         return this.httpClient
-            .post<T>(CoffeeUtil.concatUrl(baseEndPoint, 'auth/authenticate'), auth)
+            .post<T>(CoffeeUtil.concatUrl(baseEndPoint, 'user/authenticate'), auth)
             .pipe(
                 map(data => {
                     const typedData = (data as CoffeeAuthResponse<T>);
 
                     AuthUtils.saveToken(typedData.token);
-                    this.currentUser = this.type ? new this.type(typedData.user) : typedData.user as T;
-
-                    return this.currentUser;
+                    const user = this.type ? new this.type(typedData.user) : typedData.user as T;
+                    return user;
                 })
             );
     }
