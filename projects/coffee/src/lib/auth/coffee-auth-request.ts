@@ -27,6 +27,32 @@ export class CoffeeAuthRequest<T> {
     }
 
     /**
+     * Set value to the storage, based on the key and the logged user
+     */
+    setStorageValue(key: string, value: any): Observable<void> {
+        return new Observable(observer => {
+            this.getCurrentUser().subscribe(() => {
+                AuthUtils.setUserProperty(this.currentUser, key, value);
+                observer.next();
+                observer.complete();
+            });
+        });
+    }
+
+    /**
+     * Get value from storage, based on the key and the logged user 
+     */
+    getStorageValue(key: string): Observable<any> {
+        return new Observable(observer => {
+            this.getCurrentUser().subscribe(() => {
+                const value = AuthUtils.getUserProperty(this.currentUser, key);
+                observer.next(value);
+                observer.complete();
+            });
+        });
+    }
+
+    /**
      * Authenticate by Login and password, it will use "user/authenticate" 
      * endpoint, this endpoint must return { user: ..., token: .... }
      */
@@ -51,35 +77,35 @@ export class CoffeeAuthRequest<T> {
      */
     isLoggedIn(): Observable<boolean> {
         const hasToken = AuthUtils.getToken() != null ? true : false;
-    
+
         return new Observable(observer => {
-          if (!hasToken) {
-            observer.next(false);
-            observer.complete();
-            return;
-          }
-    
-          if (!this.currentUser) {
-            this.getAuthInfo().subscribe({
-              next: user => {
-                if (!user) {
-                  observer.next(false);
-                } else {
-                  observer.next(true);
-                }
-                observer.complete();
-              },
-              error: () => {
+            if (!hasToken) {
                 observer.next(false);
                 observer.complete();
-              }
-          });
-          } else {
-            observer.next(true);
-            observer.complete();
-          }
+                return;
+            }
+
+            if (!this.currentUser) {
+                this.getAuthInfo().subscribe({
+                    next: user => {
+                        if (!user) {
+                            observer.next(false);
+                        } else {
+                            observer.next(true);
+                        }
+                        observer.complete();
+                    },
+                    error: () => {
+                        observer.next(false);
+                        observer.complete();
+                    }
+                });
+            } else {
+                observer.next(true);
+                observer.complete();
+            }
         });
-      }
+    }
 
     /**
      * Returns the current logged user info or null if user is not logged in
@@ -115,7 +141,7 @@ export class CoffeeAuthRequest<T> {
      */
     logout(): void {
         AuthUtils.clearTokens();
-        this.currentUser = null;    
+        this.currentUser = null;
     }
 
     private getAuthInfo(): Observable<T> {

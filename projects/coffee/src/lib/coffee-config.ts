@@ -16,6 +16,11 @@ export interface ILinkedInAuthConfig {
      * Url to redirect when authentication succeeds!
      */
     redirectUrl: string;
+
+    /**
+     * whether to open the linkedin in a popup
+     */
+    openInPopup?: boolean;
 }
 
 export interface IConfig {

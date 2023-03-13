@@ -35,6 +35,14 @@ export class CoffeeSocialRequest {
         url += `redirect_uri=${this.config.auth.linkedIn.redirectUrl}`;
 
         return new Observable((observer) => {
+
+            if(!this.config.auth?.linkedIn?.openInPopup) {
+                window.open(url, '_self');
+                observer.next(true);
+                observer.complete();
+                return;
+            }
+
             const win = window.open(url, '_blank', `scrollbars=yes,resizable=yes,width=500,height=500`) as any;
             const timer = setInterval(() => { 
                 if(win.closed) {
@@ -73,6 +81,7 @@ export class CoffeeSocialRequest {
         .pipe(
             map((data: any) => {
                 (window as any).linkCode = data.token;
+                AuthUtils.saveToken(data.token);
                 return true;
             })
         );
