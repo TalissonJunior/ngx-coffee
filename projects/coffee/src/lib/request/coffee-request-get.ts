@@ -4,7 +4,7 @@ import {
   CoffeeQueryFilter, sortBy, where, 
   whereContains, whereDate, whereIn, 
   whereNotIn, whereOr, withQueryParameter,
-  Pager, FilterResponse
+  Pager, FilterResponse, whereIs
 } from ".";
 
 export class CoffeeRequestGet<T> {  
@@ -34,6 +34,21 @@ export class CoffeeRequestGet<T> {
     value: string | number
   ) {
     this.queryParameters.push(where(type, operator, value));
+    return this;
+  }
+
+  /**
+ * @summary
+ * Search values by a boolean type
+ * @example 
+ * .where('hasStatus', true)
+ * .where((model) => model.isValid, false)
+ */
+  whereIs(
+    type: ((model: T) => any) | string,
+    value: boolean
+  ) {
+    this.queryParameters.push(whereIs(type, value));
     return this;
   }
 

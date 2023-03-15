@@ -43,6 +43,25 @@ export const where = (
 
 /**
  * @summary
+ * Search values by a boolean type
+ * @example 
+ * .where('hasStatus', true)
+ * .where((model) => model.isValid, false)
+ */
+export const whereIs = (
+    type: ((model: any) => any) | string, 
+    value: boolean
+): CoffeeQueryFilter => {
+    const propertyName = getPropertyName(type);
+
+    return {
+        expression: `${propertyName}==${value}`,
+        type: 'filter'
+    };
+}
+
+/**
+ * @summary
  * Search values that contains the value, it will use '%like%' on database
  * @example 
  * .whereContains('name', 'text')
