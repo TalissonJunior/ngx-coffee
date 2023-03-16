@@ -153,6 +153,23 @@ export class CoffeeAuthRequest<T> {
                 map(data => {
                     this.currentUser = this.type ? new this.type(data) : data as T;
 
+                    // try to restore save data
+                    try {
+                        const keys = Object.keys(this.currentUser as any);
+
+                        for (const key of keys) {
+                            const storageValue =  AuthUtils.getUserProperty(this.currentUser, key);
+
+                            if(!storageValue) {
+                                continue;
+                            }
+
+                            (this.currentUser as any)[key] = storageValue;
+                            this.currentUser = this.type ? new this.type(this.currentUser) : this.currentUser as T;
+                        }
+                    }
+                    catch {}
+                  
                     return this.currentUser;
                 })
             );

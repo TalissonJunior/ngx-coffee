@@ -32,6 +32,7 @@ export namespace AuthUtils {
 
         savedValue[user.id + '_' + property] = JSON.stringify(value);
         localStorage.setItem(userKey, JSON.stringify(savedValue));
+        user[property] = value;
     }
 
     export const getUserProperty = (user: any, property: string): any => {
