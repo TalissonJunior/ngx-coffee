@@ -72,6 +72,28 @@ export class CoffeeAuthRequest<T> {
             );
     }
 
+     /**
+     * Authenticate by code, it will use "user" 
+     * endpoint(POST) and concatenate with the url, 
+     * this endpoint must return { user: ..., token: .... }
+     */
+     siginWithCode(url: string, code: string): Observable<T> {
+        const baseEndPoint = this.config ? this.config.baseApiUrl : "";
+
+        return this.httpClient
+            .post<T>(CoffeeUtil.concatUrl(CoffeeUtil.concatUrl(baseEndPoint, 'user'), url) + "?" + code, null)
+            .pipe(
+                map(data => {
+                    const typedData = (data as CoffeeAuthResponse<T>);
+
+                    AuthUtils.saveToken(typedData.token);
+                    const user = this.type ? new this.type(typedData.user) : typedData.user as T;
+                    return user;
+                })
+            );
+    }
+
+
     /**
      * Verify if the current user is logged in
      */

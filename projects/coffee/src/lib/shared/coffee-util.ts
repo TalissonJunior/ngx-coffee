@@ -1,8 +1,10 @@
-import { CoffeeModel } from "../models";
-
 export namespace CoffeeUtil {
     
   export const concatUrl = (currentUrl: string, suffixUrl: string | number): string => {
+    if(!suffixUrl) {
+      return currentUrl;
+    }
+
     let parsedSuffixUrl = String(suffixUrl);
 
     if(!parsedSuffixUrl) {
