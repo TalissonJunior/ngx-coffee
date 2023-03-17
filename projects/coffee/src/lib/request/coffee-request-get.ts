@@ -163,6 +163,21 @@ export class CoffeeRequestGet<T> {
 
   /**
    * @summary
+   * Returns unique single value 
+   * @example
+   * .returnSingleValue()
+   * 
+   * result => true || 1 || 'string'
+   */
+  returnSingleValue() {
+    let url = '';
+
+    url = this.parseUrl(url);
+    return this.httpClient.get<T>(url);
+  }
+
+  /**
+   * @summary
    * Returns unique object of type
    * @example
    * .returnSingleObjectOf(Type)
