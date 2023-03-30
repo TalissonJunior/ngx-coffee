@@ -40,7 +40,7 @@ export class CoffeeRequest {
    */
   save<T>(endpoint: string, vo: T, isFormData = false): Observable<T> {
     const url = CoffeeUtil.concatUrl(this.baseEndpoint, endpoint);
-    const data = isFormData ? this.convertModelToFormData(vo) : vo;
+    const data = isFormData ? CoffeeUtil.convertModelToFormData(vo) : vo;
     return this.httpClient.post<T>(url, data);
   }
 
@@ -52,7 +52,7 @@ export class CoffeeRequest {
    */
   create<T>(endpoint: string, vo: T | T[], isFormData = false): Observable<T | T[]> {
     const url = CoffeeUtil.concatUrl(this.baseEndpoint, endpoint);
-    const data = isFormData ? this.convertModelToFormData(vo) : vo;
+    const data = isFormData ? CoffeeUtil.convertModelToFormData(vo) : vo;
     return this.httpClient.post<T | T[]>(url, data);
   }
   
@@ -64,7 +64,7 @@ export class CoffeeRequest {
    */
   update<T>(endpoint: string, vo: T | T[], isFormData = false): Observable<T | T[]> {
     const url = CoffeeUtil.concatUrl(this.baseEndpoint, endpoint);
-    const data = isFormData ? this.convertModelToFormData(vo) : vo;
+    const data = isFormData ? CoffeeUtil.convertModelToFormData(vo) : vo;
     return this.httpClient.put<T | T[]>(url, data);
   }
 
@@ -76,37 +76,5 @@ export class CoffeeRequest {
   delete<bool>(endpoint: string, identifier: number | string): Observable<bool> {
     const url = CoffeeUtil.concatUrl(CoffeeUtil.concatUrl(this.baseEndpoint, endpoint), identifier);
     return this.httpClient.delete<bool>(url);
-  }
-
-  private convertModelToFormData(val: any, formData = new FormData(), namespace = ''): FormData {
-    if (typeof val !== 'undefined' && val !== null) {
-      if (val instanceof Date) {
-        formData.append(namespace, val.toISOString());
-      } else if (val instanceof Array) {
-        for (let index = 0; index < val.length; index++) {
-          const element = val[index];
-          this.convertModelToFormData(
-            element,
-            formData,
-            namespace + '[' + index + ']'
-          );
-        }
-      } else if (typeof val === 'object' && !(val instanceof File)) {
-        for (const propertyName in val) {
-          if (val.hasOwnProperty(propertyName)) {
-            this.convertModelToFormData(
-              val[propertyName],
-              formData,
-              namespace ? namespace + '.' + propertyName : propertyName
-            );
-          }
-        }
-      } else if (val instanceof File) {
-        formData.append(namespace, val);
-      } else {
-        formData.append(namespace, val.toString());
-      }
-    }
-    return formData;
   }
 }

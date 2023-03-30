@@ -21,4 +21,36 @@ export namespace CoffeeUtil {
 
     return `${currentUrl}/${parsedSuffixUrl}`;
   }
+  
+  export const convertModelToFormData = (val: any, formData = new FormData(), namespace = ''): FormData => {
+    if (typeof val !== 'undefined' && val !== null) {
+      if (val instanceof Date) {
+        formData.append(namespace, val.toISOString());
+      } else if (val instanceof Array) {
+        for (let index = 0; index < val.length; index++) {
+          const element = val[index];
+          CoffeeUtil.convertModelToFormData(
+            element,
+            formData,
+            namespace + '[' + index + ']'
+          );
+        }
+      } else if (typeof val === 'object' && !(val instanceof File)) {
+        for (const propertyName in val) {
+          if (val.hasOwnProperty(propertyName)) {
+            CoffeeUtil.convertModelToFormData(
+              val[propertyName],
+              formData,
+              namespace ? namespace + '.' + propertyName : propertyName
+            );
+          }
+        }
+      } else if (val instanceof File) {
+        formData.append(namespace, val);
+      } else {
+        formData.append(namespace, val.toString());
+      }
+    }
+    return formData;
+  }
 }

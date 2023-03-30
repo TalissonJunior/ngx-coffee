@@ -93,6 +93,22 @@ export class CoffeeAuthRequest<T> {
             );
     }
 
+    /**
+     * Changes the current user password it will use "user/changepassword" endpoint
+     */
+    changePassword(newPassword: string): Observable<T> {
+        const baseEndPoint = this.config ? this.config.baseApiUrl : "";
+        const url = CoffeeUtil.concatUrl(baseEndPoint, 'user/changepassword');
+
+        return this.httpClient
+            .put<T>(url, CoffeeUtil.convertModelToFormData(newPassword))
+            .pipe(
+                map(() => {
+                    return this.currentUser as any;
+                })
+            );
+    }
+
 
     /**
      * Verify if the current user is logged in
