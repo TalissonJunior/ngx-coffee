@@ -1,0 +1,5 @@
+## Publish
+
+```
+npm publish
+```

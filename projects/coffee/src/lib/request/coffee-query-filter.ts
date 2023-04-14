@@ -129,13 +129,15 @@ export const whereNotIn = (
  *
  * result => (name == 'bmx' AND name LIKE '%a%') OR (createdAt == '27-10-2022')
  */
- export const whereOr = (left: CoffeeQueryFilter[], right: CoffeeQueryFilter[]): CoffeeQueryFilter => {
-    const leftExpressions = left.map(value => value.expression.replace(',', "@:@")).join('@:@');
-    const rightExpressions = right.map(value => value.expression.replace(',', "@:@")).join('@:@');
+ export const whereOr = (...filters: CoffeeQueryFilter[][]): CoffeeQueryFilter => {
     const operator = '@or@';
+    
+    const expression = filters.map(filter => 
+        filter.map(value => value.expression.replace(',', "@:@")).join('@:@')
+    ).join(operator);
 
     return {
-        expression: `${leftExpressions}${operator}${rightExpressions}`,
+        expression: expression,
         type: 'filter'
     };
 }

@@ -90,8 +90,8 @@ export class CoffeeRequestGet<T> {
   * 
   * result => (name == 'bmx' AND name LIKE '%a%') OR (createdAt == '27-10-2022')
   */
-  whereOr(left: CoffeeQueryFilter[], right: CoffeeQueryFilter[]) {
-    this.queryParameters.push(whereOr(left, right));
+  whereOr(...filters: CoffeeQueryFilter[][]) {
+    this.queryParameters.push(whereOr(...filters));
     return this;
   }
 
