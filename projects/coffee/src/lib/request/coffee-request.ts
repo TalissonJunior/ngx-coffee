@@ -1,6 +1,6 @@
 import { inject } from "@angular/core";
-import { HttpClient } from "@angular/common/http";
-import { Observable } from "rxjs";
+import { HttpClient, HttpHeaders } from "@angular/common/http";
+import { Observable, map } from "rxjs";
 import { CONFIG, IConfig } from "../coffee-config";
 import { CoffeeQueryFilter } from "./coffee-query-filter";
 import { CoffeeRequestGet } from "./coffee-request-get";
@@ -76,5 +76,71 @@ export class CoffeeRequest {
   delete<bool>(endpoint: string, identifier: number | string): Observable<bool> {
     const url = CoffeeUtil.concatUrl(CoffeeUtil.concatUrl(this.baseEndpoint, endpoint), identifier);
     return this.httpClient.delete<bool>(url);
+  }
+
+  /**
+   * Downloads a file from the server and saves it with the given file name.
+   *
+   * @param endpoint - The url of the endpoint.
+   * @param model - The model (e.g { file : file }).
+   * @param fileNameWithExtension - The desired file name, including the file extension (e.g., 'file.xlsx').
+   * @param isFormData whether to send the data as form data or json
+   * @returns An Observable that completes when the file has been downloaded.
+   *
+   * Usage example:
+   * .downloadPut('file.xlsx').subscribe(() => {
+   *   console.log('File downloaded successfully');
+   * });
+   */
+   downloadPut(endpoint: string, model: any, fileNameWithExtension: string, isFormData = true) {
+    const headers = new HttpHeaders().set('Content-Type', 'application/octet-stream');
+    const url = CoffeeUtil.concatUrl(this.baseEndpoint, endpoint);
+    const data = isFormData ? CoffeeUtil.convertModelToFormData(model) : model;
+
+    return this.httpClient
+    .put(url, data, { headers, responseType: 'blob' })
+    .pipe(map((d) => {   
+        const url = window.URL.createObjectURL(d);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileNameWithExtension; 
+        link.click();
+        window.URL.revokeObjectURL(url);
+        return d;
+      }
+    ));
+  }
+
+  /**
+   * Downloads a file from the server and saves it with the given file name.
+   *
+   * @param endpoint - The url of the endpoint.
+   * @param model - The model (e.g { file : file }).
+   * @param fileNameWithExtension - The desired file name, including the file extension (e.g., 'file.xlsx').
+   * @param isFormData whether to send the data as form data or json
+   * @returns An Observable that completes when the file has been downloaded.
+   *
+   * Usage example:
+   * .downloadPost('file.xlsx').subscribe(() => {
+   *   console.log('File downloaded successfully');
+   * });
+   */
+  downloadPost(endpoint: string, model: any, fileNameWithExtension: string, isFormData = true) {
+    const headers = new HttpHeaders().set('Content-Type', 'application/octet-stream');
+    const url = CoffeeUtil.concatUrl(this.baseEndpoint, endpoint);
+    const data = isFormData ? CoffeeUtil.convertModelToFormData(model) : model;
+
+    return this.httpClient
+    .post(url, data, { headers, responseType: 'blob' })
+    .pipe(map((d) => {   
+        const url = window.URL.createObjectURL(d);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileNameWithExtension; 
+        link.click();
+        window.URL.revokeObjectURL(url);
+        return d;
+      }
+    ));
   }
 }
