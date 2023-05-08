@@ -1,4 +1,4 @@
-import { HttpClient } from "@angular/common/http";
+import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { map } from "rxjs/operators";
 import { 
   CoffeeQueryFilter, sortBy, where, 
@@ -245,6 +245,35 @@ export class CoffeeRequestGet<T> {
         }
       })
     );
+  }
+
+  /**
+   * Downloads a file from the server and saves it with the given file name.
+   *
+   * @param fileNameWithExtension - The desired file name, including the file extension (e.g., 'file.xlsx').
+   * @returns An Observable that completes when the file has been downloaded.
+   *
+   * Usage example:
+   * .download('file.xlsx').subscribe(() => {
+   *   console.log('File downloaded successfully');
+   * });
+   */
+  download(fileNameWithExtension: string) {
+    const headers = new HttpHeaders().set('Content-Type', 'application/octet-stream');
+    const url = this.parseUrl();
+
+    return this.httpClient
+    .get(url, { headers, responseType: 'blob' })
+    .pipe(map((data) => {   
+        const url = window.URL.createObjectURL(data);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileNameWithExtension; 
+        link.click();
+        window.URL.revokeObjectURL(url);
+        return data;
+      }
+    ));
   }
 
   private parseUrl(
