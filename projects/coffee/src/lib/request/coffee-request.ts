@@ -88,27 +88,27 @@ export class CoffeeRequest {
    * @returns An Observable that completes when the file has been downloaded.
    *
    * Usage example:
-   * .downloadPut('file.xlsx').subscribe(() => {
+   * .downloadPut('url', form, 'file.xlsx').subscribe(() => {
    *   console.log('File downloaded successfully');
    * });
    */
    downloadPut(endpoint: string, model: any, fileNameWithExtension: string, isFormData = true) {
-    const headers = new HttpHeaders().set('Content-Type', 'application/octet-stream');
     const url = CoffeeUtil.concatUrl(this.baseEndpoint, endpoint);
     const data = isFormData ? CoffeeUtil.convertModelToFormData(model) : model;
 
     return this.httpClient
-    .put(url, data, { headers, responseType: 'blob' })
-    .pipe(map((d) => {   
-        const url = window.URL.createObjectURL(d);
+    .put(url, data, { responseType: 'blob' })
+    .pipe(
+      map((data: Blob) => {
+        const downloadUrl = window.URL.createObjectURL(data);
         const link = document.createElement('a');
-        link.href = url;
-        link.download = fileNameWithExtension; 
+        link.href = downloadUrl;
+        link.download = fileNameWithExtension;
         link.click();
-        window.URL.revokeObjectURL(url);
-        return d;
-      }
-    ));
+        window.URL.revokeObjectURL(downloadUrl);
+        return data;
+      })
+    );
   }
 
   /**
@@ -121,26 +121,26 @@ export class CoffeeRequest {
    * @returns An Observable that completes when the file has been downloaded.
    *
    * Usage example:
-   * .downloadPost('file.xlsx').subscribe(() => {
+   * .downloadPost('url', form, 'file.xlsx').subscribe(() => {
    *   console.log('File downloaded successfully');
    * });
    */
   downloadPost(endpoint: string, model: any, fileNameWithExtension: string, isFormData = true) {
-    const headers = new HttpHeaders().set('Content-Type', 'application/octet-stream');
     const url = CoffeeUtil.concatUrl(this.baseEndpoint, endpoint);
     const data = isFormData ? CoffeeUtil.convertModelToFormData(model) : model;
 
     return this.httpClient
-    .post(url, data, { headers, responseType: 'blob' })
-    .pipe(map((d) => {   
-        const url = window.URL.createObjectURL(d);
+    .post(url, data, { responseType: 'blob' })
+    .pipe(
+      map((data: Blob) => {
+        const downloadUrl = window.URL.createObjectURL(data);
         const link = document.createElement('a');
-        link.href = url;
-        link.download = fileNameWithExtension; 
+        link.href = downloadUrl;
+        link.download = fileNameWithExtension;
         link.click();
-        window.URL.revokeObjectURL(url);
-        return d;
-      }
-    ));
+        window.URL.revokeObjectURL(downloadUrl);
+        return data;
+      })
+    );
   }
 }
