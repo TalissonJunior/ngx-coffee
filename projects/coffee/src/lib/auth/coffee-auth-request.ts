@@ -1,5 +1,5 @@
 import { HttpClient } from "@angular/common/http";
-import { map, Observable } from "rxjs";
+import { catchError, EMPTY, interval, map, mergeMap, Observable, of, startWith, take, tap, throwError } from "rxjs";
 import { IConfig } from "../coffee-config";
 import { CoffeeAuth } from "./models/coffee-auth";
 import { CoffeeSocialRequest } from "./social-request/coffee-social-request";
@@ -10,6 +10,8 @@ import { AuthUtils } from "./auth-utils";
 export class CoffeeAuthRequest<T> {
     private socialRequest: CoffeeSocialRequest;
     private currentUser: T | null;
+    private currentUserCache$?: Observable<T>;
+    private currentUserLock: boolean = false;
 
     constructor(
         private config: IConfig,
@@ -149,29 +151,50 @@ export class CoffeeAuthRequest<T> {
      * Returns the current logged user info or null if user is not logged in
      */
     getCurrentUser(): Observable<T | null> {
-        return new Observable((resolve) => {
-            if (!AuthUtils.getToken()) {
-                resolve.next(null);
-                resolve.complete();
-            }
-
-            if (this.currentUser) {
-                resolve.next(this.currentUser);
-                resolve.complete();
-            }
-
-            this.getAuthInfo()
-                .subscribe({
-                    next: (snapshot) => {
-                        resolve.next(snapshot);
-                        resolve.complete();
-                    },
-                    error: () => {
-                        resolve.next(null);
-                        resolve.complete();
-                    },
+        if (!AuthUtils.getToken()) {
+            return of(null);
+        }
+    
+        if (this.currentUser) {
+            return of(this.currentUser);
+        }
+    
+        if (this.currentUserCache$) {
+            return this.currentUserCache$;
+        }
+    
+        if (!this.currentUserLock) {
+            this.currentUserLock = true;
+    
+            this.currentUserCache$ = this.getAuthInfo().pipe(
+                tap((user) => {
+                    this.currentUser = user;
+                    this.currentUserLock = false;
+                    this.currentUserCache$ = undefined;
+                }),
+                catchError((err) => {
+                    this.currentUserCache$ = undefined;
+                    this.currentUserLock = false;
+                    this.currentUser = null;
+                    return throwError(err);
                 })
-        });
+            );
+    
+            return this.currentUserCache$;
+        } else {
+            // If another request is in progress, wait for it to complete
+            return interval(50).pipe(
+                startWith(0),
+                mergeMap(() => {
+                    if (this.currentUser) {
+                        return of(this.currentUser);
+                    } else {
+                        return EMPTY;
+                    }
+                }),
+                take(1)
+            );
+        }
     }
 
     /**
