@@ -35,11 +35,19 @@ export class CoffeeInterceptor implements HttpInterceptor {
     return next
       .handle(this.addTokenToRequest(request, AuthUtils.getToken() ?? '', this.config))
       .pipe(
-        map(response => {
+        map((response: any) => {
           return response;
         }),
-        catchError(async response => {
-          const error = response.error.error ? response.error.error : response.error;
+        catchError(async (response: { error: { error: any; }; status: number; }) => {
+          let error = response as any;
+
+          if(response.error) {
+            error = response.error;
+
+            if(error.error) {
+              error = error.error;
+            }
+          }
 
           if (response instanceof HttpErrorResponse) {
             // Forbidden user, insufficient privileges
