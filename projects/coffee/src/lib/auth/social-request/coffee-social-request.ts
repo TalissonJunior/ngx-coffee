@@ -69,15 +69,16 @@ export class CoffeeSocialRequest {
      * 
      * from this point just use "coffeeService.auth.getCurrentUser()" to get the logged user 
      * information
+     *
+     * @param code linkeding code 
+     * @param bodyData any extra body data to send on 'user/authenticate?linkedInCode=' usecase
      * @returns acessToken "bearer"
      */
-    validateLinkedInSignIn(code: string): Observable<boolean> {
+    validateLinkedInSignIn(code: string, bodyData: any = null): Observable<boolean> {
         const url = this.config?.baseApiUrl;
+        bodyData ? bodyData : { login: 'linkedIn', password: 'linkedIn' };
         
-        return this.httpClient!.post<string>(`${url}/user/authenticate?linkedInCode=` + code, {
-            login: 'linkedIn',
-            password: 'linkedIn'
-        }) 
+        return this.httpClient!.post<string>(`${url}/user/authenticate?linkedInCode=` + code, bodyData) 
         .pipe(
             map((data: any) => {
                 (window as any).linkCode = data.token;
