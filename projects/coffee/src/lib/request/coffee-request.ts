@@ -1,6 +1,6 @@
 import { inject } from "@angular/core";
 import { HttpClient, HttpHeaders } from "@angular/common/http";
-import { Observable, map } from "rxjs";
+import { Observable, Subscription, map } from "rxjs";
 import { CONFIG, IConfig } from "../coffee-config";
 import { CoffeeQueryFilter } from "./coffee-query-filter";
 import { CoffeeRequestGet } from "./coffee-request-get";
@@ -38,13 +38,40 @@ export class CoffeeRequest {
    * @param vo data to save
    * @param isFormData whether to send the data as form data or json
    */
-  save<T>(endpoint: string, vo: T, isFormData = false): Observable<T> {
+  save<T>(endpoint: string, vo: T, isFormData = false): {
+    /**
+     * If the vo object has id > 0, it uses httpClient.put; otherwise, it uses httpClient.post.
+     */
+    useHttpPutWhenId: () => Observable<T>,
+    subscribe: (
+      next?: ((value: T) => void) | null,
+      error?: ((error: any) => void) | null, 
+      complete?: (() => void) | null) => Subscription
+  } {
     const url = CoffeeUtil.concatUrl(this.baseEndpoint, endpoint);
     const data = isFormData ? CoffeeUtil.convertModelToFormData(vo) : vo;
-    return this.httpClient.post<T>(url, data);
+
+    const baseResponse = (usePutWhenId: boolean = false) => {
+      if(usePutWhenId) {
+        if ((vo as any).id && (vo as any).id > 0) {
+          // Object has id > 0, use httpClient.put
+          return this.httpClient.put<T>(url, data);
+        } else {
+          // Object has id <= 0, use httpClient.post
+          return this.httpClient.post<T>(url, data);
+        }
+      }
+
+      return this.httpClient.post<T>(url, data);
+    }
+
+    return {
+      useHttpPutWhenId: () => baseResponse(true),
+      subscribe: baseResponse(false).subscribe
+    }
   }
 
-   /**
+  /**
    * Create a new register on a specific endpoint
    * @param endpoint endpoint url "/myendpoint"
    * @param vo data to save

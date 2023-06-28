@@ -198,6 +198,15 @@ export class CoffeeAuthRequest<T> {
     }
 
     /**
+    * Refreshes the current logged-in user and fetches it again.
+    */
+    refreshCurrentUser(): Observable<T | null> {
+        this.currentUser = null; // Reset the current user
+    
+        return this.getCurrentUser();
+    }
+
+    /**
      * Removes logged user data
      */
     logout(): void {
