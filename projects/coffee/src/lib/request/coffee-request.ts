@@ -49,22 +49,20 @@ export class CoffeeRequest {
     const data = isFormData ? CoffeeUtil.convertModelToFormData(vo) : vo;
 
     const baseResponse = (usePutWhenId: boolean = false) => {
-      if(usePutWhenId) {
-        if ((vo as any).id && (vo as any).id > 0) {
-          // Object has id > 0, use httpClient.put
-          return this.httpClient.put<T>(url, data);
-        } else {
-          // Object has id <= 0, use httpClient.post
-          return this.httpClient.post<T>(url, data);
-        }
+      if(usePutWhenId && (vo as any).id && (vo as any).id > 0) {
+        // Object has id > 0, use httpClient.put
+        return this.httpClient.put<T>(url, data);
       }
-
+  
+      // In all other cases, use httpClient.post
       return this.httpClient.post<T>(url, data);
     }
 
+    let observable = baseResponse(false);
+    
     return {
       useHttpPutWhenId: () => baseResponse(true),
-      subscribe: baseResponse(false).subscribe
+      subscribe:(observerOrNext) => observable.subscribe(observerOrNext)
     }
   }
 
