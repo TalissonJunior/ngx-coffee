@@ -1,6 +1,6 @@
 import { inject } from "@angular/core";
 import { HttpClient, HttpHeaders } from "@angular/common/http";
-import { Observable, Subscription, map } from "rxjs";
+import { Observable, Observer, Subscription, map } from "rxjs";
 import { CONFIG, IConfig } from "../coffee-config";
 import { CoffeeQueryFilter } from "./coffee-query-filter";
 import { CoffeeRequestGet } from "./coffee-request-get";
@@ -43,10 +43,7 @@ export class CoffeeRequest {
      * If the vo object has id > 0, it uses httpClient.put; otherwise, it uses httpClient.post.
      */
     useHttpPutWhenId: () => Observable<T>,
-    subscribe: (
-      next?: ((value: T) => void) | null,
-      error?: ((error: any) => void) | null, 
-      complete?: (() => void) | null) => Subscription
+    subscribe: (observerOrNext?: Partial<Observer<T>> | ((value: T) => void) | undefined) => Subscription
   } {
     const url = CoffeeUtil.concatUrl(this.baseEndpoint, endpoint);
     const data = isFormData ? CoffeeUtil.convertModelToFormData(vo) : vo;
