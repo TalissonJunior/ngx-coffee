@@ -12,6 +12,7 @@ export class CoffeeAuthRequest<T> {
     private currentUser: T | null;
     private currentUserCache$?: Observable<T>;
     private currentUserLock: boolean = false;
+    private queryParams: { [key: string]: string } = {};
 
     constructor(
         private config: IConfig,
@@ -29,7 +30,38 @@ export class CoffeeAuthRequest<T> {
     }
 
     /**
-     * Set value to the storage, based on the key and the logged user
+     * Chains a query parameter to the request made by the `getCurrentUser` method.
+     *
+     * This method allows you to add additional query parameters to the request URL
+     * when calling `getCurrentUser`. The parameters are stored in the instance and
+     * appended to the URL during the API call.
+     *
+     * @param {string} key - The name of the query parameter.
+     * @param {string} value - The value of the query parameter.
+     *
+     * @returns {CoffeeAuthRequest<T>} - The instance of the class, allowing for method chaining.
+     *
+     * @example
+     * // Adds a query parameter 'exampleKey' with the value 'exampleValue' to the request.
+     * authRequest.withQueryParameter('exampleKey', 'exampleValue');
+     *
+     * @see getCurrentUser
+     */
+    withQueryParameter(key: string, value: string): CoffeeAuthRequest<T> {
+        this.queryParams[key] = value;
+        return this;
+    }
+
+    /**
+     * Set a value in the storage, associated with a key and the logged-in user.
+     *
+     * This method first retrieves the current user and then sets the provided value
+     * in the storage, associated with the provided key and the user.
+     *
+     * @param {string} key - The key with which the value will be associated in the storage.
+     * @param {any} value - The value to be stored.
+     *
+     * @returns {Observable<void>} - An Observable that completes when the value has been set.
      */
     setStorageValue(key: string, value: any): Observable<void> {
         return new Observable(observer => {
@@ -42,7 +74,14 @@ export class CoffeeAuthRequest<T> {
     }
 
     /**
-     * Get value from storage, based on the key and the logged user 
+     * Retrieve a value from the storage, based on a key and the logged-in user.
+     *
+     * This method first retrieves the current user and then gets the value
+     * associated with the provided key from the storage.
+     *
+     * @param {string} key - The key whose associated value is to be retrieved.
+     *
+     * @returns {Observable<any>} - An Observable that emits the retrieved value.
      */
     getStorageValue(key: string): Observable<any> {
         return new Observable(observer => {
@@ -55,8 +94,15 @@ export class CoffeeAuthRequest<T> {
     }
 
     /**
-     * Authenticate by Login and password, it will use "user/authenticate" 
-     * endpoint, this endpoint must return { user: ..., token: .... }
+     * Authenticate using login and password.
+     *
+     * This method sends a POST request to the "user/authenticate" endpoint with
+     * the provided authentication data. The endpoint is expected to return an object
+     * containing the user data and a token.
+     *
+     * @param {CoffeeAuth} auth - The authentication data, containing login and password.
+     *
+     * @returns {Observable<T>} - An Observable that emits the authenticated user data.
      */
     siginWithLoginPassword(auth: CoffeeAuth): Observable<T> {
         const baseEndPoint = this.config ? this.config.baseApiUrl : "";
@@ -96,7 +142,15 @@ export class CoffeeAuthRequest<T> {
     }
 
     /**
-     * Changes the current user password it will use "user/changepassword" endpoint
+     * Change the password of the current user.
+     *
+     * This method sends a PUT request to the "user/changepassword" endpoint with
+     * the new password. The endpoint is expected to update the password of the
+     * currently authenticated user.
+     *
+     * @param {string} newPassword - The new password for the user.
+     *
+     * @returns {Observable<T>} - An Observable that emits the current user data.
      */
     changePassword(newPassword: string): Observable<T> {
         const baseEndPoint = this.config ? this.config.baseApiUrl : "";
@@ -113,7 +167,12 @@ export class CoffeeAuthRequest<T> {
 
 
     /**
-     * Verify if the current user is logged in
+     * Check if the current user is logged in.
+     *
+     * This method checks if a token exists and if the current user data is available,
+     * indicating that a user is logged in.
+     *
+     * @returns {Observable<boolean>} - An Observable that emits `true` if a user is logged in, otherwise `false`.
      */
     isLoggedIn(): Observable<boolean> {
         const hasToken = AuthUtils.getToken() != null ? true : false;
@@ -148,7 +207,13 @@ export class CoffeeAuthRequest<T> {
     }
 
     /**
-     * Returns the current logged user info or null if user is not logged in
+     * Retrieve the current logged-in user data.
+     *
+     * This method retrieves the data of the current logged-in user. If the user data
+     * is cached, it returns the cached data. Otherwise, it sends a GET request to
+     * the "user/authenticated/info" endpoint to retrieve the user data.
+     *
+     * @returns {Observable<T | null>} - An Observable that emits the current user data, or `null` if no user is logged in.
      */
     getCurrentUser(): Observable<T | null> {
         if (!AuthUtils.getToken()) {
@@ -198,8 +263,13 @@ export class CoffeeAuthRequest<T> {
     }
 
     /**
-    * Refreshes the current logged-in user and fetches it again.
-    */
+     * Refresh the current logged-in user data.
+     *
+     * This method clears the cached user data and retrieves it again, ensuring that
+     * the client has the most up-to-date user data.
+     *
+     * @returns {Observable<T | null>} - An Observable that emits the refreshed user data, or `null` if no user is logged in.
+     */
     refreshCurrentUser(): Observable<T | null> {
         this.currentUser = null; // Reset the current user
     
@@ -207,8 +277,11 @@ export class CoffeeAuthRequest<T> {
     }
 
     /**
-     * Removes logged user data
-     */
+     * Log out the current user.
+     *
+     * This method clears the stored tokens and the cached user data, effectively
+     * logging out the user.
+    */
     logout(): void {
         AuthUtils.clearTokens();
         this.currentUser = null;
@@ -216,9 +289,19 @@ export class CoffeeAuthRequest<T> {
 
     private getAuthInfo(): Observable<T> {
         const baseEndPoint = this.config ? this.config.baseApiUrl : "";
+        let url = CoffeeUtil.concatUrl(baseEndPoint, 'user/authenticated/info');
+    
+        // Append query parameters to the URL
+        const queryString = Object.keys(this.queryParams)
+            .map(key => `${key}=${encodeURIComponent(this.queryParams[key])}`)
+            .join('&');
 
+        if (queryString) {
+            url = `${url}?${queryString}`;
+        }
+    
         return this.httpClient
-            .get<T>(CoffeeUtil.concatUrl(baseEndPoint, 'user/authenticated/info'))
+            .get<T>(url)
             .pipe(
                 map(data => {
                     this.currentUser = this.type ? new this.type(data) : data as T;
