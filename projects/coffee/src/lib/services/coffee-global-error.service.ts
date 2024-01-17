@@ -42,14 +42,13 @@ export class CoffeeGlobalErrorService implements ErrorHandler {
       logLevel: logLevel 
     };
 
+    this.errorCache.set(errorSignature, Date.now());
     this.http.post(this.config.baseApiUrl + '/coffee/log/error', errorPayload)
-      .subscribe(() => {
-        this.errorCache.set(errorSignature, Date.now());
-      });
+      .subscribe(() => {});
   }
 
   private getErrorSignature(error: any): string {
-    return `${error.message}-${error.stack}`;
+    return error.message;
   }
 
   private isErrorRecentlyLogged(errorSignature: string): boolean {
