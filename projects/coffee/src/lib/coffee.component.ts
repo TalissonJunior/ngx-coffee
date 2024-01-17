@@ -2,11 +2,7 @@ import { Component } from '@angular/core';
 
 @Component({
   selector: 'lib-coffee',
-  template: `
-    <p>
-      coffee works!
-    </p>
-  `,
+  template: ``,
   styles: [
   ]
 })

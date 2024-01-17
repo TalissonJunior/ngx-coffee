@@ -11,21 +11,55 @@ export class CoffeeSocialRequest {
         private httpClient: HttpClient
     ) { }
 
+    /*signInWithSocialMedia(type: 'Google' | 'Microsoft', user: SocialUser, blob: Blob): void {
+        this.isLoading = true;
+    
+        var file = null;
+    
+        if(blob != null) {
+          file = new File([blob], "profile.png", { type: blob.type, lastModified: new Date().getTime() });
+        }
+    
+        this.coffeeService.save(`user/socialmedia/${type}`, {
+          'name': user.name,
+          'email': user.email,
+          'photoUrl': user.photoUrl,
+          'serverAuthCode': user.idToken,
+          'photo': {
+            file: file
+          },
+          'id': user.id
+        }, true)
+        .subscribe({
+          next: (snapshot: any) => {
+            if(snapshot?.token) {
+                window.localStorage.setItem('sk', snapshot.token);
+            }
+          },
+          error: () => {
+
+           },
+        });
+      }*/
+
     /**
-     * It will redirect your page to the likendIn authorization page, 
+     * Initiates the LinkedIn sign-in process.
+     * Depending on the configuration, it either redirects the user to the LinkedIn authorization page
+     * or opens it in a new popup window.
+     *
+     * @returns {Observable<boolean>} - An observable that emits `true` if the window is opened or user is redirected successfully.
      * 
-     * after entering the credentials,
-     * it will send it back to your "auth.likendIn.redirectUrl" page with a query parameter "code"
+     * @example
+     * signInWithLinkedIn().subscribe(
+     *     success => console.log('Sign-in initiated:', success),
+     *     error => console.log('Sign-in initiation failed:', error)
+     * );
      * 
-     * this "code" needs to be use to get the "acessToken".
-     * to get "acesstoken" use the "validateLinkedInSignIn" method passing the code as parameter
-     * 
-     * @documentation
-     * https://learn.microsoft.com/pt-br/linkedin/shared/authentication/authorization-code-flow
+     * @see {@link https://learn.microsoft.com/pt-br/linkedin/shared/authentication/authorization-code-flow}
      */
     signInWithLinkedIn(): Observable<boolean> {
-        if(!this.config?.auth || !this.config?.auth?.linkedIn) {
-            throw Error('Must provide "auth" configuration property at "CoffeeModule.forRoot({})" before using linkedIn auth');
+        if(!this.config?.auth?.linkedIn) {
+            throw Error('LinkedIn Authentication Configuration Missing: Ensure that the "auth" configuration property is provided when utilizing "CoffeeModule.forRoot({})" and that it includes "linkedIn" authentication settings.');
         }
 
         let url = `${this.linkedInAuthApiUrl}?`;
@@ -64,15 +98,20 @@ export class CoffeeSocialRequest {
        
     }
 
-    /**
-     * It uses the "code" from the "signInWithLinkedIn()" method to get the "acessToken"
-     * 
-     * from this point just use "coffeeService.auth.getCurrentUser()" to get the logged user 
-     * information
+     /**
+     * Validates the LinkedIn sign-in by exchanging the received `code` for an access token,
+     * which is then stored for subsequent API requests.
      *
-     * @param code linkeding code 
-     * @param bodyData any extra body data to send on 'user/authenticate?linkedInCode=' usecase
-     * @returns acessToken "bearer"
+     * @param {string} code - The authorization code received from LinkedIn.
+     * @param {any} [bodyData=null] - Optional. Additional body data to send in the request.
+     *
+     * @returns {Observable<boolean>} - An observable that emits `true` if the token is successfully obtained and saved.
+     * 
+     * @example
+     * validateLinkedInSignIn(code).subscribe(
+     *     success => console.log('Token validated:', success),
+     *     error => console.log('Token validation failed:', error)
+     * );
      */
     validateLinkedInSignIn(code: string, bodyData: any = null): Observable<boolean> {
         const url = this.config?.baseApiUrl;
