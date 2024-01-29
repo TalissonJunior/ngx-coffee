@@ -196,9 +196,10 @@ export class CoffeeSocialRequest {
                             });
                         },
                         // FAILED TO OPEN POPUP
-                        error: () => {
+                        error: (error) => {
                             observer.error({
                                 code: "POPUP_AUTH_FAILURE",
+                                error: error,
                                 message: "Authentication popup failed to open. Please ensure " +
                                 "Microsoft authentication is correctly configured in CoffeeModule," +
                                 " and verify that the provided client ID and tenant information are accurate."
@@ -208,9 +209,10 @@ export class CoffeeSocialRequest {
                     });
                 },
                 // FAILED TO INITIALIZE
-                error: () => {
+                error: (error) => {
                     observer.error({
                         code: "INITIALIZATION_FAILURE",
+                        error: error,
                         message: "Failed to initialize Microsoft authentication." +
                         " Please check if Microsoft authentication is properly set up in CoffeeModule" +
                         " and verify your configuration details, including the client ID and authority URL."
@@ -270,9 +272,10 @@ export class CoffeeSocialRequest {
                     observer.next(true);
                     observer.complete();
                 },
-                error: () => {
+                error: (error) => {
                     observer.error({
                         code: 'SOCIAL_MEDIA_AUTH_ENDPOINT_ERROR',
+                        error: error,
                         message: `There was an issue with the social media authentication`+
                         ` process for ${type}. Ensure the endpoint "user/socialmedia/${type}"` +
                         ` is properly configured and accessible. This error may also occur if`+

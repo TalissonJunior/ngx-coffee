@@ -13,7 +13,8 @@ const microsoftFactoryConfig = (config: IConfig) => {
   return new PublicClientApplication({
     auth: {
       clientId: config.auth?.microsoft?.clientId ?? '',
-      redirectUri: config.auth?.microsoft?.redirectUri ?? ''
+      redirectUri: config.auth?.microsoft?.redirectUri ?? '',
+      authority: config.auth?.microsoft?.authority ?? ''
     },
     cache: {
       cacheLocation: BrowserCacheLocation.LocalStorage,
