@@ -3,8 +3,24 @@ import { HttpClientModule, HTTP_INTERCEPTORS } from "@angular/common/http";
 import { IConfig, CONFIG } from './coffee-config';
 import { CoffeeService } from './coffee.service';
 import { CoffeeInterceptor } from './coffee.interceptor';
-import { CoffeeSocialGoogleButtonComponent } from './buttons';
 import { CoffeeGlobalErrorService } from './services/coffee-global-error.service';
+
+import { BrowserCacheLocation, PublicClientApplication } from '@azure/msal-browser';
+import { MsalService } from '@azure/msal-angular';
+import { Location } from '@angular/common';
+
+const microsoftFactoryConfig = (config: IConfig) => {
+  return new PublicClientApplication({
+    auth: {
+      clientId: config.auth?.microsoft?.clientId ?? '',
+      redirectUri: config.auth?.microsoft?.redirectUri ?? ''
+    },
+    cache: {
+      cacheLocation: BrowserCacheLocation.LocalStorage,
+      storeAuthStateInCookie: true,
+    }
+  })
+} 
 
 @NgModule({
   /*declarations: [
@@ -35,6 +51,21 @@ export class CoffeeModule {
         {
           provide: ErrorHandler,
           useClass: CoffeeGlobalErrorService
+        },
+        // MICROSOFT SETUP
+        {
+          provide: MsalService,
+          useFactory: (config: IConfig, location: Location) => 
+          new MsalService(
+            microsoftFactoryConfig(config),
+            location
+          ),
+          deps: [CONFIG, Location]
+        },
+        {
+          provide: PublicClientApplication,
+          useFactory: microsoftFactoryConfig,
+          deps: [CONFIG]
         }
       ]
     };

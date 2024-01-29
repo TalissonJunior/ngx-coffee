@@ -94,6 +94,27 @@ export interface IMicrosoftAuthConfig {
      * redirectUri: 'http://localhost:4200/auth-callback'
      */
     redirectUri: string;
+
+     /**
+     * scopes?: Array<string> (Optional)
+     *
+     * An array of strings representing the Microsoft Graph permissions that your application
+     * is requesting. These scopes determine the level of access to user data that your
+     * application requires. Each scope translates to a specific permission on the Microsoft
+     * Identity platform.
+     *
+     * Examples of common scopes include 'User.Read', 'Mail.Read', 'Files.ReadWrite'.
+     * The scopes you choose will be presented to the user during the consent process.
+     *
+     * It is important to request only the scopes necessary for your application to
+     * minimize the amount of access granted.
+     *
+     * Default is ['User.Read', 'User.ReadBasic.All'].
+     *
+     * Example:
+     * scopes: ['User.Read', 'Calendars.Read']
+     */
+     scopes?: Array<string>;
 }
 
 /**

@@ -2,45 +2,52 @@ import { HttpClient } from "@angular/common/http";
 import { map, Observable } from "rxjs";
 import { IConfig } from "../../coffee-config";
 import { AuthUtils } from "../auth-utils";
+import { MsalService } from "@azure/msal-angular";
+import { CoffeeRequest } from "../../request/coffee-request";
+import { CoffeeAuthSocial } from "../models/coffee-auth-social";
 
 export class CoffeeSocialRequest {
     private linkedInAuthApiUrl = "https://www.linkedin.com/oauth/v2/authorization";
+    private microsoftPhotoUrl = "https://graph.microsoft.com/v1.0/me/photo/$value";
     
     constructor(
         private config: IConfig, 
-        private httpClient: HttpClient
+        private httpClient: HttpClient,
+        private request: CoffeeRequest,
+        private msalService: MsalService
     ) { }
 
-    /*signInWithSocialMedia(type: 'Google' | 'Microsoft', user: SocialUser, blob: Blob): void {
-        this.isLoading = true;
-    
-        var file = null;
-    
-        if(blob != null) {
-          file = new File([blob], "profile.png", { type: blob.type, lastModified: new Date().getTime() });
-        }
-    
-        this.coffeeService.save(`user/socialmedia/${type}`, {
-          'name': user.name,
-          'email': user.email,
-          'photoUrl': user.photoUrl,
-          'serverAuthCode': user.idToken,
-          'photo': {
-            file: file
-          },
-          'id': user.id
-        }, true)
-        .subscribe({
-          next: (snapshot: any) => {
-            if(snapshot?.token) {
-                window.localStorage.setItem('sk', snapshot.token);
-            }
-          },
-          error: () => {
-
-           },
+    /**
+     * Initiates the Microsoft sign-in process using the MSAL service. This method
+     * handles the entire flow of authenticating with Microsoft, including opening
+     * a popup for user consent, retrieving the user profile, and handling any errors
+     * that might occur during the process.
+     *
+     * @returns {Observable<boolean>} - An observable that emits `true` if the sign-in process is successful.
+     */
+    signInWithMicrosoft(): Observable<boolean>  {
+        return new Observable((observer) => {
+            this._signInWithMicrosoft().subscribe({
+                next: (model) => {
+                    this._signInWithSocialMedia('Microsoft', model)
+                    .subscribe({
+                        next: () => {
+                            observer.next(true);
+                            observer.complete();
+                        },
+                        error: (error) => {
+                            observer.error(error);
+                            observer.complete();
+                        }
+                    });
+                },
+                error: (error) => {
+                    observer.error(error);
+                    observer.complete();
+                }
+            })
         });
-      }*/
+    }
 
     /**
      * Initiates the LinkedIn sign-in process.
@@ -125,6 +132,156 @@ export class CoffeeSocialRequest {
                 return true;
             })
         );
+    }
+
+    /**
+     * A private method that performs the Microsoft login operation. It uses the MSAL
+     * service to open a login popup and requests access tokens for the specified scopes.
+     * On successful login, it fetches the user's profile picture from Microsoft Graph API.
+     *
+     * @returns {Observable<CoffeeAuthSocial>} - An observable that emits the authenticated user's data.
+     */
+    private _signInWithMicrosoft(): Observable<CoffeeAuthSocial> {
+        return new Observable((observer) => {
+            let model = new CoffeeAuthSocial();
+            
+            this.msalService.initialize().subscribe({
+                next: () => {
+                    const scopes = this.config.auth?.microsoft?.scopes ?? ['User.Read', 'User.ReadBasic.All'];
+                
+                    this.msalService.loginPopup({
+                        scopes: scopes
+                    }).subscribe({
+                        next: (popupResult) => {
+
+                            model = {
+                                id: popupResult.account.tenantId,
+                                email: popupResult.account.username,
+                                name: popupResult.account.name ?? '',
+                                token: popupResult.account.idToken ?? '',
+                            }
+
+                            const accessTokenRequest = {
+                                scopes: scopes,
+                                account: popupResult.account
+                            };
+
+                            // GETTING TOKEN TO GET USER PROFILE IMAGE
+                            this.msalService.acquireTokenSilent(accessTokenRequest)
+                            .subscribe({
+                                next: (response) => {
+                                    const headers = {
+                                        Authorization: `Bearer ${response.accessToken}`
+                                    };
+                            
+                                    this.httpClient.get(
+                                        this.microsoftPhotoUrl, 
+                                        { headers, responseType: 'blob' }
+                                    )
+                                    .subscribe({
+                                        next: (image) => {
+                                            model.image = image;
+                                        },
+                                        complete: () => {
+                                            observer.next(model);
+                                            observer.complete();
+                                        }
+                                    });
+                                },
+                                // FAILED TO ACQUIRE TOKEN
+                                error: () => {
+                                    observer.next(model);
+                                    observer.complete();
+                                }
+                            });
+                        },
+                        // FAILED TO OPEN POPUP
+                        error: () => {
+                            observer.error({
+                                code: "POPUP_AUTH_FAILURE",
+                                message: "Authentication popup failed to open. Please ensure " +
+                                "Microsoft authentication is correctly configured in CoffeeModule," +
+                                " and verify that the provided client ID and tenant information are accurate."
+                            });
+                            observer.complete();
+                        }
+                    });
+                },
+                // FAILED TO INITIALIZE
+                error: () => {
+                    observer.error({
+                        code: "INITIALIZATION_FAILURE",
+                        message: "Failed to initialize Microsoft authentication." +
+                        " Please check if Microsoft authentication is properly set up in CoffeeModule" +
+                        " and verify your configuration details, including the client ID and authority URL."
+                    });
+                    observer.complete();
+                }
+            });
+        });
+    }
+
+    /**
+     * Handles the submission of social media authentication data to the server.
+     * This method is responsible for sending the user's information, including
+     * their profile picture, to a designated server endpoint for either Google or
+     * Microsoft sign-in processes.
+     *
+     * @param {string} type - The type of social media ('Google' or 'Microsoft').
+     * @param {CoffeeAuthSocial} user - The user's authentication data.
+     *
+     * @returns {Observable<boolean>} - An observable that emits `true` if the data is successfully submitted.
+     */
+    private _signInWithSocialMedia(
+        type: 'Google' | 'Microsoft', 
+        user: CoffeeAuthSocial
+    ): Observable<boolean> {
+        
+        return new Observable((observer) => {
+            var file = null;
+        
+            if(user.image != null) {
+                file = new File(
+                    [user.image], 
+                    `${user.id}.png`, 
+                    { 
+                        type: user.image.type, 
+                        lastModified: new Date().getTime() 
+                    }
+                );
+            }
+        
+            this.request.save(`user/socialmedia/${type}`, {
+                'name': user.name,
+                'email': user.email,
+                'photoUrl': user.photoUrl,
+                'serverAuthCode': user.token,
+                'photo': {
+                    file: file
+                },
+                'id': user.id
+                }, true)
+                .subscribe({
+                next: (snapshot: any) => {
+                    if(snapshot?.token) {
+                        AuthUtils.saveToken(snapshot.token);
+                    }
+
+                    observer.next(true);
+                    observer.complete();
+                },
+                error: () => {
+                    observer.error({
+                        code: 'SOCIAL_MEDIA_AUTH_ENDPOINT_ERROR',
+                        message: `There was an issue with the social media authentication`+
+                        ` process for ${type}. Ensure the endpoint "user/socialmedia/${type}"` +
+                        ` is properly configured and accessible. This error may also occur if`+
+                        ` the server-side handling of the authentication data for ${type} is not set up correctly.`
+                    });
+                    observer.complete();
+                },
+            });
+        });
     }
 
 }

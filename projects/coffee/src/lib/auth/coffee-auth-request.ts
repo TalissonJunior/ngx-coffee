@@ -6,6 +6,8 @@ import { CoffeeSocialRequest } from "./social-request/coffee-social-request";
 import { CoffeeUtil } from "../shared/coffee-util";
 import { CoffeeAuthResponse } from "./models/coffee-auth-reponse";
 import { AuthUtils } from "./auth-utils";
+import { CoffeeRequest } from "../request/coffee-request";
+import { MsalService } from "@azure/msal-angular";
 
 export class CoffeeAuthRequest<T> {
     private socialRequest: CoffeeSocialRequest;
@@ -17,13 +19,17 @@ export class CoffeeAuthRequest<T> {
     constructor(
         private config: IConfig,
         private httpClient: HttpClient,
-        private type?: new (val: any) => T
+        private request: CoffeeRequest,
+        private msalService: MsalService,
+        private type?: new (val: any) => T,
     ) {
     }
 
     get social(): CoffeeSocialRequest {
         if (!this.socialRequest) {
-            this.socialRequest = new CoffeeSocialRequest(this.config, this.httpClient);
+            this.socialRequest = new CoffeeSocialRequest(
+                this.config, this.httpClient, this.request, this.msalService
+            );
         }
 
         return this.socialRequest;
