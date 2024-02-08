@@ -1,5 +1,5 @@
 import { HttpClient } from "@angular/common/http";
-import { catchError, EMPTY, interval, map, mergeMap, Observable, of, startWith, take, tap, throwError } from "rxjs";
+import { catchError, EMPTY, finalize, interval, map, mergeMap, Observable, of, startWith, take, tap, throwError } from "rxjs";
 import { IConfig } from "../coffee-config";
 import { CoffeeAuth } from "./models/coffee-auth";
 import { CoffeeSocialRequest } from "./social-request/coffee-social-request";
@@ -247,7 +247,12 @@ export class CoffeeAuthRequest<T> {
                     this.currentUserCache$ = undefined;
                     this.currentUserLock = false;
                     this.currentUser = null;
-                    return throwError(err);
+                    return throwError(() => err);
+                }),
+                finalize(() => {
+                    if (!this.currentUser) {
+                        this.currentUserLock = false;
+                    }
                 })
             );
     
@@ -301,36 +306,47 @@ export class CoffeeAuthRequest<T> {
         const queryString = Object.keys(this.queryParams)
             .map(key => `${key}=${encodeURIComponent(this.queryParams[key])}`)
             .join('&');
-
+    
         if (queryString) {
             url = `${url}?${queryString}`;
         }
     
         return this.httpClient
-            .get<T>(url)
-            .pipe(
-                map(data => {
-                    this.currentUser = this.type ? new this.type(data) : data as T;
+        .get<T>(url)
+        .pipe(
+            map(data => {
+                this.currentUser = this.type ? new this.type(data) : data as T;
 
-                    // try to restore save data
-                    try {
-                        const keys = Object.keys(this.currentUser as any);
+                // try to restore save data
+                try {
+                    const keys = Object.keys(this.currentUser as any);
 
-                        for (const key of keys) {
-                            const storageValue =  AuthUtils.getUserProperty(this.currentUser, key);
+                    for (const key of keys) {
+                        const storageValue = AuthUtils.getUserProperty(this.currentUser, key);
 
-                            if(!storageValue) {
-                                continue;
-                            }
-
-                            (this.currentUser as any)[key] = storageValue;
-                            this.currentUser = this.type ? new this.type(this.currentUser) : this.currentUser as T;
+                        if(!storageValue) {
+                            continue;
                         }
+
+                        (this.currentUser as any)[key] = storageValue;
+                        this.currentUser = this.type ? new this.type(this.currentUser) : this.currentUser as T;
                     }
-                    catch {}
-                  
-                    return this.currentUser;
-                })
-            );
+                }
+                catch {}
+
+                return this.currentUser;
+            }),
+            finalize(() => {
+                if (!this.currentUser) {
+                    this.currentUserLock = false;
+                }
+            }),
+            catchError((err) => {
+                this.currentUserLock = false;
+                this.currentUserCache$ = undefined;
+                this.currentUser = null;
+                return throwError(() => err);
+            })
+        );
     }
 }
