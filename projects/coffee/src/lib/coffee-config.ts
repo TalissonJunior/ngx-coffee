@@ -181,6 +181,31 @@ export interface IConfig {
      */
     disableLogs?: Boolean;
 
+   /**
+     * disableEncryptErrorLogs: Boolean
+     *
+     * Controls the visibility of encryption error messages within the application. 
+     * When set to true, the application suppresses the display of errors related 
+     * to encryption processes, such as failures in obtaining the public key for 
+     * authentication or encrypting sensitive data. This setting can be useful in 
+     * production environments to enhance user experience by hiding technical encryption 
+     * failures from the end users.
+     *
+     * When set to false, the application will display encryption error messages, 
+     * assisting in the identification and debugging of issues related to encryption 
+     * during development or in testing environments. It is beneficial for developers 
+     * to have immediate feedback on encryption errors to promptly address and resolve them.
+     *
+     * It is recommended to set this to true in production environments to prevent 
+     * potential exposure of sensitive encryption error details to end users and to 
+     * ensure a cleaner user experience.
+     *
+     * Example:
+     * disableEncryptErrorLogs: true  // Hides encryption error messages in the application
+     * disableEncryptErrorLogs: false // Displays encryption error messages for debugging purposes
+     */
+    disableEncryptErrorLogs?: Boolean;
+
     /**
      * auth?: {
      *   linkedIn?: ILinkedInAuthConfig;

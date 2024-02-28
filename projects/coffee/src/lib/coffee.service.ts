@@ -5,6 +5,7 @@ import { CoffeeAuthRequest } from './auth/coffee-auth-request';
 import { CoffeeFormUtil } from './forms/coffee-form-util';
 import { CoffeeFileUtil } from './file/coffee-file-util';
 import { MsalService } from '@azure/msal-angular';
+import { CoffeeEncryptService } from './services/coffee-encrypt.service';
 
 @Injectable()
 export class CoffeeService extends CoffeeRequest {
@@ -12,10 +13,11 @@ export class CoffeeService extends CoffeeRequest {
   private formUtil: CoffeeFormUtil;
   
   constructor(
-    httpClient: HttpClient, 
+    httpClient: HttpClient,
+    encrypt: CoffeeEncryptService,
     private msalService: MsalService
   ) {
-    super(httpClient);
+    super(httpClient, encrypt);
   }
 
   /**
@@ -26,7 +28,7 @@ export class CoffeeService extends CoffeeRequest {
     if(!this.authRequest) {
       this.authRequest = new CoffeeAuthRequest<T>(
         this.config, 
-        this.httpClient, 
+        this.httpClient,
         this, 
         this.msalService,
         type

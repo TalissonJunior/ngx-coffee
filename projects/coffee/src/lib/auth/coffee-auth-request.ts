@@ -1,5 +1,5 @@
 import { HttpClient } from "@angular/common/http";
-import { catchError, EMPTY, finalize, interval, map, mergeMap, Observable, of, startWith, take, tap, throwError } from "rxjs";
+import { catchError, EMPTY, finalize, from, interval, map, mergeMap, Observable, of, startWith, switchMap, take, tap, throwError } from "rxjs";
 import { IConfig } from "../coffee-config";
 import { CoffeeAuth } from "./models/coffee-auth";
 import { CoffeeSocialRequest } from "./social-request/coffee-social-request";
@@ -19,7 +19,7 @@ export class CoffeeAuthRequest<T> {
     constructor(
         private config: IConfig,
         private httpClient: HttpClient,
-        private request: CoffeeRequest,
+        private coffeeService: CoffeeRequest,
         private msalService: MsalService,
         private type?: new (val: any) => T,
     ) {
@@ -28,7 +28,7 @@ export class CoffeeAuthRequest<T> {
     get social(): CoffeeSocialRequest {
         if (!this.socialRequest) {
             this.socialRequest = new CoffeeSocialRequest(
-                this.config, this.httpClient, this.request, this.msalService
+                this.config, this.httpClient, this.coffeeService, this.msalService
             );
         }
 
@@ -100,30 +100,44 @@ export class CoffeeAuthRequest<T> {
     }
 
     /**
-     * Authenticate using login and password.
+     * Authenticates a user using their login and password.
      *
-     * This method sends a POST request to the "user/authenticate" endpoint with
-     * the provided authentication data. The endpoint is expected to return an object
-     * containing the user data and a token.
+     * This method initiates a POST request to the "user/authenticate" endpoint, carrying
+     * the authentication details provided in the `auth` parameter. Before sending, the
+     * authentication data is encrypted using the public key fetched by the `encrypt` service.
+     * The encryption process is transparent to the caller; if encryption succeeds, the request
+     * includes an 'encrypted' header set to 'true'. If encryption is not possible (e.g., due to
+     * missing encryption configuration or keys), the data is sent as is, without encryption.
      *
-     * @param {CoffeeAuth} auth - The authentication data, containing login and password.
+     * The server is expected to respond with an object containing both the user data
+     * and an authentication token. This method extracts the token, saving it for future
+     * requests, and returns the user data wrapped in an Observable for further processing
+     * or direct subscription.
      *
-     * @returns {Observable<T>} - An Observable that emits the authenticated user data.
+     * Note: Encryption failures are handled gracefully by logging an error and proceeding
+     * without encryption, but this behavior can be adjusted based on security requirements.
+     *
+     * @param {CoffeeAuth} auth - The authentication data object, typically containing user login
+     *                            and password fields.
+     *
+     * @returns {Observable<T>} - An Observable emitting the authenticated user data upon successful
+     *                            authentication. The user data type, `T`, is determined by the generic
+     *                            parameter of the class. In case of an error during the HTTP request or
+     *                            the encryption process, the Observable will emit an error.
      */
     siginWithLoginPassword(auth: CoffeeAuth): Observable<T> {
-        const baseEndPoint = this.config ? this.config.baseApiUrl : "";
+        return this.coffeeService.create<T>('user/authenticate', auth)
+        .withEncryption()
+        .prepare()
+        .pipe(
+            map(data => {
+                const typedData = (data as CoffeeAuthResponse<T>);
 
-        return this.httpClient
-            .post<T>(CoffeeUtil.concatUrl(baseEndPoint, 'user/authenticate'), auth)
-            .pipe(
-                map(data => {
-                    const typedData = (data as CoffeeAuthResponse<T>);
-
-                    AuthUtils.saveToken(typedData.token);
-                    const user = this.type ? new this.type(typedData.user) : typedData.user as T;
-                    return user;
-                })
-            );
+                AuthUtils.saveToken(typedData.token);
+                const user = this.type ? new this.type(typedData.user) : typedData.user as T;
+                return user;
+            })
+        );
     }
 
      /**
@@ -132,19 +146,20 @@ export class CoffeeAuthRequest<T> {
      * this endpoint must return { user: ..., token: .... }
      */
      siginWithCode(url: string, code: string): Observable<T> {
-        const baseEndPoint = this.config ? this.config.baseApiUrl : "";
+        return this.coffeeService.create<T>('user', null as any, true)
+        .withUrlSegment(url)
+        .withQueryParameter('code', code)
+        .withEncryption()
+        .prepare()
+        .pipe(
+            map(data => {
+                const typedData = (data as CoffeeAuthResponse<T>);
 
-        return this.httpClient
-            .post<T>(CoffeeUtil.concatUrl(CoffeeUtil.concatUrl(baseEndPoint, 'user'), url) + "?" + code, null)
-            .pipe(
-                map(data => {
-                    const typedData = (data as CoffeeAuthResponse<T>);
-
-                    AuthUtils.saveToken(typedData.token);
-                    const user = this.type ? new this.type(typedData.user) : typedData.user as T;
-                    return user;
-                })
-            );
+                AuthUtils.saveToken(typedData.token);
+                const user = this.type ? new this.type(typedData.user) : typedData.user as T;
+                return user;
+            })
+        );
     }
 
     /**
@@ -159,16 +174,14 @@ export class CoffeeAuthRequest<T> {
      * @returns {Observable<T>} - An Observable that emits the current user data.
      */
     changePassword(newPassword: string): Observable<T> {
-        const baseEndPoint = this.config ? this.config.baseApiUrl : "";
-        const url = CoffeeUtil.concatUrl(baseEndPoint, 'user/changepassword');
-
-        return this.httpClient
-            .put<T>(url, CoffeeUtil.convertModelToFormData(newPassword))
-            .pipe(
-                map(() => {
-                    return this.currentUser as any;
-                })
-            );
+        return this.coffeeService.update('user/changepassword', newPassword, true)
+        .withEncryption()
+        .prepare()
+        .pipe(
+            map(() => {
+                return this.currentUser as any;
+            })
+        );
     }
 
 
@@ -293,8 +306,9 @@ export class CoffeeAuthRequest<T> {
      * This method clears the stored tokens and the cached user data, effectively
      * logging out the user.
     */
-    logout(): void {
+    async logout(): Promise<void> {
         AuthUtils.clearTokens();
+        await this.msalService.logout();
         this.currentUser = null;
     }
 

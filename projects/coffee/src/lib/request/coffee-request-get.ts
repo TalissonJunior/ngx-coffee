@@ -6,6 +6,7 @@ import {
   whereNotIn, whereOr, withQueryParameter,
   Pager, FilterResponse, whereIs
 } from ".";
+import { Observable } from "rxjs";
 
 export class CoffeeRequestGet<T> {  
   private apiUrl: string;
@@ -193,7 +194,7 @@ export class CoffeeRequestGet<T> {
       map(data => new type(data))
     );
   }
-
+  
   /**
    * @summary
    * Returns list of pagination type

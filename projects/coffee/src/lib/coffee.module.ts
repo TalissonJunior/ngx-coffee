@@ -8,6 +8,7 @@ import { CoffeeGlobalErrorService } from './services/coffee-global-error.service
 import { BrowserCacheLocation, PublicClientApplication } from '@azure/msal-browser';
 import { MsalService } from '@azure/msal-angular';
 import { Location } from '@angular/common';
+import { CoffeeEncryptService } from './services/coffee-encrypt.service';
 
 const microsoftFactoryConfig = (config: IConfig) => {
   return new PublicClientApplication({
@@ -40,6 +41,7 @@ export class CoffeeModule {
       ngModule: CoffeeModule,
       providers: [
         CoffeeService, 
+        CoffeeEncryptService,
         { 
           provide: CONFIG, 
           useValue: config 

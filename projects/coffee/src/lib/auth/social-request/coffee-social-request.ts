@@ -26,6 +26,7 @@ export class CoffeeSocialRequest {
      * @returns {Observable<boolean>} - An observable that emits `true` if the sign-in process is successful.
      */
     signInWithMicrosoft(): Observable<boolean>  {
+        debugger
         return new Observable((observer) => {
             this._signInWithMicrosoft().subscribe({
                 next: (model) => {
@@ -262,8 +263,9 @@ export class CoffeeSocialRequest {
                     file: file
                 },
                 'id': user.id
-                }, true)
-                .subscribe({
+                }, true
+            )
+            .subscribe({
                 next: (snapshot: any) => {
                     if(snapshot?.token) {
                         AuthUtils.saveToken(snapshot.token);

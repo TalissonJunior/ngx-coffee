@@ -1,16 +1,23 @@
 import { inject } from "@angular/core";
-import { HttpClient, HttpHeaders } from "@angular/common/http";
-import { Observable, Observer, Subscription, map } from "rxjs";
+import { HttpClient } from "@angular/common/http";
+import { Observable } from "rxjs";
 import { CONFIG, IConfig } from "../coffee-config";
 import { CoffeeQueryFilter } from "./coffee-query-filter";
 import { CoffeeRequestGet } from "./coffee-request-get";
 import { CoffeeUtil } from "../shared/coffee-util";
+import { CoffeeEncryptService } from "../services/coffee-encrypt.service";
+import { CoffeeRquestSave } from "./coffee-request-save";
+import { CoffeeRequestPostPut } from "./coffee-request-post-put";
+import { map } from 'rxjs/operators';
 
 export class CoffeeRequest {
   protected config = inject<IConfig>(CONFIG);
   private baseEndpoint: string = '';
 
-  constructor(protected httpClient: HttpClient) {
+  constructor(
+    protected httpClient: HttpClient,
+    protected encrypt: CoffeeEncryptService
+  ) {
     this.baseEndpoint = this.config ? this.config.baseApiUrl : "";
   }
   
@@ -38,32 +45,9 @@ export class CoffeeRequest {
    * @param vo data to save
    * @param isFormData whether to send the data as form data or json
    */
-  save<T>(endpoint: string, vo: T, isFormData = false): {
-    /**
-     * If the vo object has id > 0, it uses httpClient.put; otherwise, it uses httpClient.post.
-     */
-    useHttpPutWhenId: () => Observable<T>,
-    subscribe: (observerOrNext?: Partial<Observer<T>> | ((value: T) => void) | undefined) => Subscription
-  } {
+  save<T>(endpoint: string, vo: any, isFormData = false): CoffeeRquestSave<T>{
     const url = CoffeeUtil.concatUrl(this.baseEndpoint, endpoint);
-    const data = isFormData ? CoffeeUtil.convertModelToFormData(vo) : vo;
-
-    const baseResponse = (usePutWhenId: boolean = false) => {
-      if(usePutWhenId && (vo as any).id && (vo as any).id > 0) {
-        // Object has id > 0, use httpClient.put
-        return this.httpClient.put<T>(url, data);
-      }
-  
-      // In all other cases, use httpClient.post
-      return this.httpClient.post<T>(url, data);
-    }
-
-    let observable = baseResponse(false);
-    
-    return {
-      useHttpPutWhenId: () => baseResponse(true),
-      subscribe:(observerOrNext) => observable.subscribe(observerOrNext)
-    }
+    return new CoffeeRquestSave<T>(this.httpClient, this.encrypt, url, vo, isFormData);
   }
 
   /**
@@ -72,10 +56,9 @@ export class CoffeeRequest {
    * @param vo data to save
    * @param isFormData whether to send the data as form data or json
    */
-  create<T>(endpoint: string, vo: T | T[], isFormData = false): Observable<T | T[]> {
+  create<T>(endpoint: string, vo: any, isFormData = false): CoffeeRequestPostPut<T | T[]> {
     const url = CoffeeUtil.concatUrl(this.baseEndpoint, endpoint);
-    const data = isFormData ? CoffeeUtil.convertModelToFormData(vo) : vo;
-    return this.httpClient.post<T | T[]>(url, data);
+    return new CoffeeRequestPostPut<T | T[]>(this.httpClient, this.encrypt, url, vo, false, isFormData);
   }
   
   /**
@@ -84,10 +67,9 @@ export class CoffeeRequest {
    * @param vo data to save
    * @param isFormData whether to send the data as form data or json
    */
-  update<T>(endpoint: string, vo: T | T[], isFormData = false): Observable<T | T[]> {
+  update<T>(endpoint: string, vo: any, isFormData = false): CoffeeRequestPostPut<T | T[]> {
     const url = CoffeeUtil.concatUrl(this.baseEndpoint, endpoint);
-    const data = isFormData ? CoffeeUtil.convertModelToFormData(vo) : vo;
-    return this.httpClient.put<T | T[]>(url, data);
+    return new CoffeeRequestPostPut<T | T[]>(this.httpClient, this.encrypt, url, vo, true, isFormData);
   }
 
   /**
@@ -115,22 +97,7 @@ export class CoffeeRequest {
    * });
    */
    downloadPut(endpoint: string, model: any, fileNameWithExtension: string, isFormData = true) {
-    const url = CoffeeUtil.concatUrl(this.baseEndpoint, endpoint);
-    const data = isFormData ? CoffeeUtil.convertModelToFormData(model) : model;
-
-    return this.httpClient
-    .put(url, data, { responseType: 'blob' })
-    .pipe(
-      map((data: Blob) => {
-        const downloadUrl = window.URL.createObjectURL(data);
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = fileNameWithExtension;
-        link.click();
-        window.URL.revokeObjectURL(downloadUrl);
-        return data;
-      })
-    );
+    return this.downloadFile('PUT', endpoint, model, fileNameWithExtension, isFormData);
   }
 
   /**
@@ -148,19 +115,47 @@ export class CoffeeRequest {
    * });
    */
   downloadPost(endpoint: string, model: any, fileNameWithExtension: string, isFormData = true) {
+    return this.downloadFile('POST', endpoint, model, fileNameWithExtension, isFormData);
+  }
+
+  /**
+   * Downloads a file from the server using either PUT or POST method and saves it with the given file name.
+   *
+   * @param method - The HTTP method to use ('PUT' or 'POST').
+   * @param endpoint - The URL of the endpoint.
+   * @param model - The model to send (e.g., { file: file }).
+   * @param fileNameWithExtension - The desired file name, including the file extension (e.g., 'file.xlsx').
+   * @param isFormData - Whether to send the data as FormData or JSON.
+   * @returns An Observable that completes when the file has been downloaded.
+   *
+   * Usage example:
+   * .downloadFile('PUT', 'url', form, 'file.xlsx').subscribe(() => {
+   *   console.log('File downloaded successfully');
+   * });
+   */
+  private downloadFile(
+    method: 'PUT' | 'POST', 
+    endpoint: string, 
+    model: any, 
+    fileNameWithExtension: string, 
+    isFormData = true
+  ): Observable<Blob> {
     const url = CoffeeUtil.concatUrl(this.baseEndpoint, endpoint);
     const data = isFormData ? CoffeeUtil.convertModelToFormData(model) : model;
+    const requestObservable = method === 'PUT' 
+      ? this.httpClient.put(url, data, { responseType: 'blob' }) 
+      : this.httpClient.post(url, data, { responseType: 'blob' });
 
-    return this.httpClient
-    .post(url, data, { responseType: 'blob' })
-    .pipe(
+    return requestObservable.pipe<Blob>(
       map((data: Blob) => {
         const downloadUrl = window.URL.createObjectURL(data);
         const link = document.createElement('a');
         link.href = downloadUrl;
         link.download = fileNameWithExtension;
+        document.body.appendChild(link); // Ensure the link is in the document
         link.click();
         window.URL.revokeObjectURL(downloadUrl);
+        link.remove(); // Clean up the link element
         return data;
       })
     );
