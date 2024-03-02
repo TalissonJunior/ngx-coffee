@@ -1,14 +1,15 @@
-import { ErrorHandler, ModuleWithProviders, NgModule } from '@angular/core';
+import { APP_INITIALIZER, ErrorHandler, ModuleWithProviders, NgModule } from '@angular/core';
 import { HttpClientModule, HTTP_INTERCEPTORS } from "@angular/common/http";
 import { IConfig, CONFIG } from './coffee-config';
 import { CoffeeService } from './coffee.service';
 import { CoffeeInterceptor } from './coffee.interceptor';
 import { CoffeeGlobalErrorService } from './services/coffee-global-error.service';
 
-import { BrowserCacheLocation, PublicClientApplication } from '@azure/msal-browser';
+import { PublicClientApplication } from '@azure/msal-browser';
 import { MsalService } from '@azure/msal-angular';
 import { Location } from '@angular/common';
 import { CoffeeEncryptService } from './services/coffee-encrypt.service';
+import { lastValueFrom } from 'rxjs';
 
 const microsoftFactoryConfig = (config: IConfig) => {
   return new PublicClientApplication({
@@ -16,13 +17,15 @@ const microsoftFactoryConfig = (config: IConfig) => {
       clientId: config.auth?.microsoft?.clientId ?? '',
       redirectUri: config.auth?.microsoft?.redirectUri ?? '',
       authority: config.auth?.microsoft?.authority ?? ''
-    },
-    cache: {
-      cacheLocation: BrowserCacheLocation.LocalStorage,
-      storeAuthStateInCookie: true,
     }
   })
 } 
+
+export function initializeMsal(msalService: MsalService): () => Promise<void> {
+  return (): Promise<void> => {
+    return lastValueFrom(msalService.initialize());
+  };
+}
 
 @NgModule({
   /*declarations: [
@@ -64,6 +67,12 @@ export class CoffeeModule {
             location
           ),
           deps: [CONFIG, Location]
+        },
+        {
+          provide: APP_INITIALIZER,
+          useFactory: initializeMsal,
+          deps: [MsalService],
+          multi: true
         },
         {
           provide: PublicClientApplication,

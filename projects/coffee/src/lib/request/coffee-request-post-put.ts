@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, Observer, Subscription, from, of, throwError } from 'rxjs';
-import { catchError, finalize, switchMap } from 'rxjs/operators';
+import { Observable, Observer, Subscription, from } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { CoffeeEncryptService } from '../services/coffee-encrypt.service';
 import { CoffeeUtil } from '../shared/coffee-util';
 

@@ -26,7 +26,6 @@ export class CoffeeSocialRequest {
      * @returns {Observable<boolean>} - An observable that emits `true` if the sign-in process is successful.
      */
     signInWithMicrosoft(): Observable<boolean>  {
-        debugger
         return new Observable((observer) => {
             this._signInWithMicrosoft().subscribe({
                 next: (model) => {
@@ -144,82 +143,82 @@ export class CoffeeSocialRequest {
      */
     private _signInWithMicrosoft(): Observable<CoffeeAuthSocial> {
         return new Observable((observer) => {
+
             let model = new CoffeeAuthSocial();
-            
-            this.msalService.initialize().subscribe({
-                next: () => {
-                    const scopes = this.config.auth?.microsoft?.scopes ?? ['User.Read', 'User.ReadBasic.All'];
-                
-                    this.msalService.loginPopup({
-                        scopes: scopes
-                    }).subscribe({
-                        next: (popupResult) => {
+            const scopes = this.config.auth?.microsoft?.scopes ?? ['User.Read', 'User.ReadBasic.All'];
+        
+            this.msalService.instance.handleRedirectPromise()
+            .then(() => {
+                this.msalService.loginPopup({
+                    scopes: scopes
+                }).subscribe({
+                    next: (popupResult) => {
 
-                            model = {
-                                id: popupResult.account.tenantId,
-                                email: popupResult.account.username,
-                                name: popupResult.account.name ?? '',
-                                token: popupResult.account.idToken ?? '',
-                            }
-
-                            const accessTokenRequest = {
-                                scopes: scopes,
-                                account: popupResult.account
-                            };
-
-                            // GETTING TOKEN TO GET USER PROFILE IMAGE
-                            this.msalService.acquireTokenSilent(accessTokenRequest)
-                            .subscribe({
-                                next: (response) => {
-                                    const headers = {
-                                        Authorization: `Bearer ${response.accessToken}`
-                                    };
-                            
-                                    this.httpClient.get(
-                                        this.microsoftPhotoUrl, 
-                                        { headers, responseType: 'blob' }
-                                    )
-                                    .subscribe({
-                                        next: (image) => {
-                                            model.image = image;
-                                        },
-                                        complete: () => {
-                                            observer.next(model);
-                                            observer.complete();
-                                        }
-                                    });
-                                },
-                                // FAILED TO ACQUIRE TOKEN
-                                error: () => {
-                                    observer.next(model);
-                                    observer.complete();
-                                }
-                            });
-                        },
-                        // FAILED TO OPEN POPUP
-                        error: (error) => {
-                            observer.error({
-                                code: "POPUP_AUTH_FAILURE",
-                                error: error,
-                                message: "Authentication popup failed to open. Please ensure " +
-                                "Microsoft authentication is correctly configured in CoffeeModule," +
-                                " and verify that the provided client ID and tenant information are accurate."
-                            });
-                            observer.complete();
+                        model = {
+                            id: popupResult.account.tenantId,
+                            email: popupResult.account.username,
+                            name: popupResult.account.name ?? '',
+                            token: popupResult.account.idToken ?? '',
                         }
-                    });
-                },
-                // FAILED TO INITIALIZE
-                error: (error) => {
-                    observer.error({
-                        code: "INITIALIZATION_FAILURE",
-                        error: error,
-                        message: "Failed to initialize Microsoft authentication." +
-                        " Please check if Microsoft authentication is properly set up in CoffeeModule" +
-                        " and verify your configuration details, including the client ID and authority URL."
-                    });
-                    observer.complete();
-                }
+
+                        const accessTokenRequest = {
+                            scopes: scopes,
+                            account: popupResult.account
+                        };
+
+
+                        // GETTING TOKEN TO GET USER PROFILE IMAGE
+                        this.msalService.acquireTokenSilent(accessTokenRequest)
+                        .subscribe({
+                            next: (response) => {
+                                const headers = {
+                                    Authorization: `Bearer ${response.accessToken}`
+                                };
+                        
+                                this.httpClient.get(
+                                    this.microsoftPhotoUrl, 
+                                    { headers, responseType: 'blob' }
+                                )
+                                .subscribe({
+                                    next: (image) => {
+                                        model.image = image;
+                                    },
+                                    complete: () => {
+                                        observer.next(model);
+                                        observer.complete();
+                                    }
+                                });
+                            },
+                            // FAILED TO ACQUIRE TOKEN
+                            error: () => {
+                                observer.next(model);
+                                observer.complete();
+                            }
+                        });
+                    },
+                    // FAILED TO OPEN POPUP
+                    error: (error) => {
+                        observer.error({
+                            code: "POPUP_AUTH_FAILURE",
+                            error: error,
+                            message: "Authentication popup failed to open. Please ensure " +
+                            "Microsoft authentication is correctly configured in CoffeeModule," +
+                            " and verify that the provided client ID and tenant information are accurate."
+                        });
+                        observer.complete();
+                    }
+                });
+
+            })
+            .catch((error) => {
+                observer.error({
+                    code: "REDIRECT_FAILURE",
+                    error: error,
+                    message: "Authentication popup redirect failed. Please ensure " +
+                    "Microsoft authentication is correctly configured in CoffeeModule," +
+                    " and verify that the provided client ID and tenant information are accurate."
+                });
+                observer.complete();
             });
         });
     }

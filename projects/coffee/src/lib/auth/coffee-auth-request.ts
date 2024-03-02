@@ -308,7 +308,11 @@ export class CoffeeAuthRequest<T> {
     */
     async logout(): Promise<void> {
         AuthUtils.clearTokens();
-        await this.msalService.logout();
+        
+        if (this.msalService.instance.getAllAccounts().length > 0) {
+            await this.msalService.instance.logout();
+        }
+
         this.currentUser = null;
     }
 
