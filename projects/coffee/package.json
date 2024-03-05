@@ -1,13 +1,14 @@
 {
   "name": "ngx-coffee",
-  "version": "1.0.2",
+  "version": "1.0.5",
   "peerDependencies": {
     "@angular/common": "^15.2.0",
     "@angular/core": "^15.2.0",
     "@azure/msal-angular": "^3.0.5",
     "@azure/msal-browser": "^3.2.0",
     "jsencrypt": "^3.3.2",
-    "rxjs": "~7.8.0"
+    "rxjs": "~7.8.0",
+    "crypto-js": "^4.2.0"
   },
   "dependencies": {
     "tslib": "^2.3.0"

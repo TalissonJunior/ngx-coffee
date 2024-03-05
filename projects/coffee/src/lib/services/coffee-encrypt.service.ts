@@ -1,41 +1,58 @@
 import { CONFIG, IConfig } from '../coffee-config';
 import { HttpClient } from '@angular/common/http';
 import { Injectable, Inject } from '@angular/core';
-import { CoffeeKeyPair } from '../models/coffee-key-pair';
 import JSEncrypt from 'jsencrypt';
 import { firstValueFrom } from 'rxjs';
+import * as CryptoJS from 'crypto-js';
 
 @Injectable()
 export class CoffeeEncryptService {
-  private keyPair: CoffeeKeyPair;
+  private publicKey: string;
 
   constructor(
     private http: HttpClient,
     @Inject(CONFIG) private config: IConfig
   ) {}
 
-  async encrypt(data: string): Promise<string | false> {
+  async encrypt<Z>(data: Z): Promise< Z | { k: string, d: string } | false> {
     await this.fetchKey();
-    
-    if(!this.keyPair || !this.keyPair.id) {
-      return data;
+
+    if (!this.publicKey) {
+      return false;
     }
 
+    const aesKey = CryptoJS.lib.WordArray.random(128/8).toString(CryptoJS.enc.Hex);
+    const aesIV = CryptoJS.lib.WordArray.random(128/8).toString(CryptoJS.enc.Hex);
+
+    const encryptedData = CryptoJS.AES.encrypt(JSON.stringify(data), CryptoJS.enc.Hex.parse(aesKey), {
+      iv: CryptoJS.enc.Hex.parse(aesIV),
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7
+    }).toString();
+
     let encryptor = new JSEncrypt();
-    encryptor.setPublicKey(this.keyPair.publicKey);
-    return encryptor.encrypt(data);
+    encryptor.setPublicKey(this.publicKey);
+    const encryptedKey = encryptor.encrypt(aesKey + ':' + aesIV);
+
+    if (!encryptedKey || encryptedKey == "false") {
+      return false;
+    }
+
+    return { k: encryptedKey, d: encryptedData };
   }
   
   private async fetchKey(): Promise<void> {
-    if (this.keyPair && this.keyPair.id) {
+    if (this.publicKey) {
       return;
     }
   
     try {
-      const snapshot = await firstValueFrom(this.http.get<CoffeeKeyPair>(
-        this.config.baseApiUrl + '/coffee/keys/_self')
+      const options = { responseType: 'text' as 'text' } as any;
+      const snapshot = await firstValueFrom(this.http.get<string>(
+          this.config.baseApiUrl + '/coffee/keys/public', options
+        )
       );
-      this.keyPair = new CoffeeKeyPair(snapshot);
+      this.publicKey = snapshot as any;
     } catch (error) {
       if (this.config.disableEncryptErrorLogs) {
         return;

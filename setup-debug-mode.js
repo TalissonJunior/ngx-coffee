@@ -23,10 +23,8 @@ fs.writeFile(destinationFile, fileContent.trim(), 'utf8', (err) => {
   console.log(chalk.green('The NGX-COFFEE library has been successfully prepared for local debugging.'));
   console.log(chalk.yellow('To use the local version of the NGX-COFFEE library in your Angular project, follow these steps:'));
   console.log(chalk.cyan('1. Open the package.json file of your Angular project.'));
-  console.log(chalk.cyan(`2. Add or update the ngx-coffee dependency to point to the local library path:`));
-  console.log(`"ngx-coffee": "file:${libraryPath}"`);
   
-  console.log(chalk.cyan(`3. In your Angular project tsconfig.json file update it to look like this:`));
+  console.log(chalk.cyan(`2. In your Angular project tsconfig.json file update it to look like this:`));
   console.log(`
     {
       "compilerOptions": {
@@ -41,6 +39,5 @@ fs.writeFile(destinationFile, fileContent.trim(), 'utf8', (err) => {
       ]
     }
   `);
-  console.log(chalk.cyan('4. Run `npm install` to install the local version of the library.'));
-  console.log(chalk.cyan('5. Start or restart your Angular application with `ng serve`.'));
+  console.log(chalk.cyan('4. Start or restart your Angular application with `ng serve`.'));
 });

@@ -108,8 +108,11 @@ export class CoffeeRequestPostPut<T> {
                 }
 
                 let headers = new HttpHeaders();
-                if (this.encrypt && !(data instanceof FormData)) {
+                if (this.encrypt && !(data instanceof FormData) && data != false) {
                     headers = headers.set('encrypted', 'true');
+                }
+                else {
+                    data = this.data;
                 }
                 
                 if (this.usePut) {
@@ -139,11 +142,11 @@ export class CoffeeRequestPostPut<T> {
      * 
      * @returns A promise resolving to the encrypted data, the original data, or false if encryption fails.
      */
-    private async encryptDataBeforeSend(): Promise<string | false | T | FormData> {
+    private async encryptDataBeforeSend(): Promise<{ k: string, d: string } | false | T | FormData> {
         if (!this.encrypt || this.isFormData) {
             return this.data;
         }
-        const encryptedData = await this.encryptService.encrypt(JSON.stringify(this.data));
+        const encryptedData = await this.encryptService.encrypt(this.data);
         return encryptedData;
     }
 }
