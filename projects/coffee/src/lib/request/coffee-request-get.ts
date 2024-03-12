@@ -6,7 +6,6 @@ import {
   whereNotIn, whereOr, withQueryParameter,
   Pager, FilterResponse, whereIs
 } from ".";
-import { Observable } from "rxjs";
 
 export class CoffeeRequestGet<T> {  
   private apiUrl: string;
@@ -282,7 +281,7 @@ export class CoffeeRequestGet<T> {
     pagination?: { currentPage: number, pageSize: number }
   ): string {
     let params = [];
-    let url = this.apiUrl;
+    let url = this.extractLastUrl(this.apiUrl);
 
     const filters = this.queryParameters.filter(param => param.type == 'filter');
     const sorts = this.queryParameters.filter(param => param.type == 'sort');
@@ -308,8 +307,11 @@ export class CoffeeRequestGet<T> {
       params = params.concat(queryParameters.map(param => param.expression));
     }
 
-    if (suffixEndpoint) {
+    if (!suffixEndpoint?.startsWith("http")) {
       url += suffixEndpoint;
+    }
+    else {
+      url = suffixEndpoint;
     }
 
     if (params.length > 0) {
@@ -317,5 +319,15 @@ export class CoffeeRequestGet<T> {
     }
 
     return url;
+  }
+
+  private extractLastUrl(apiUrl: string): string {
+    const urls = apiUrl.split('http').filter(segment => segment.trim() !== '');
+    if (urls.length > 0) {
+      // Append 'http' back to the URL fragment unless it's already a complete URL segment
+      return 'http' + urls[urls.length - 1];
+    }
+  
+    return apiUrl; // Fallback to the original URL if no 'http' was found
   }
 }
