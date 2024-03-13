@@ -308,10 +308,10 @@ export class CoffeeRequestGet<T> {
     }
 
     if (!suffixEndpoint?.startsWith("http")) {
-      url += suffixEndpoint;
+      url += suffixEndpoint ?? '';
     }
     else {
-      url = suffixEndpoint;
+      url = suffixEndpoint ?? '';
     }
 
     if (params.length > 0) {
