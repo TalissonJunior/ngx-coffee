@@ -22,9 +22,8 @@ fs.writeFile(destinationFile, fileContent.trim(), 'utf8', (err) => {
 
   console.log(chalk.green('The NGX-COFFEE library has been successfully prepared for local debugging.'));
   console.log(chalk.yellow('To use the local version of the NGX-COFFEE library in your Angular project, follow these steps:'));
-  console.log(chalk.cyan('1. Open the package.json file of your Angular project.'));
   
-  console.log(chalk.cyan(`2. In your Angular project tsconfig.json file update it to look like this:`));
+  console.log(chalk.cyan(`1. In your Angular project tsconfig.json file update it to look like this:`));
   console.log(`
     {
       "compilerOptions": {

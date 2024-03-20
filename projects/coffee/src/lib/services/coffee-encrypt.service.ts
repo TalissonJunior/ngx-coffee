@@ -13,8 +13,8 @@ export class CoffeeEncryptService {
     private http: HttpClient,
     @Inject(CONFIG) private config: IConfig
   ) {}
-
-  async encrypt<Z>(data: Z): Promise< Z | { k: string, d: string } | false> {
+  
+  async encrypt<Z>(data: Z): Promise<Z | { k: string, d: string } | false> {
     await this.fetchKey();
 
     if (!this.publicKey) {
@@ -30,15 +30,68 @@ export class CoffeeEncryptService {
       padding: CryptoJS.pad.Pkcs7
     }).toString();
 
-    let encryptor = new JSEncrypt();
-    encryptor.setPublicKey(this.publicKey);
-    const encryptedKey = encryptor.encrypt(aesKey + ':' + aesIV);
+    const encryptedKey = await this.encryptWithPublicKey(aesKey + ':' + aesIV);
 
-    if (!encryptedKey || encryptedKey == "false") {
+    if (!encryptedKey) {
       return false;
     }
 
     return { k: encryptedKey, d: encryptedData };
+  }
+
+  private async encryptWithPublicKey(data: string): Promise<string | null> {
+    try {
+      const enc = new TextEncoder();
+  
+      // Convert PEM to ArrayBuffer
+      const pemHeader = "-----BEGIN PUBLIC KEY-----";
+      const pemFooter = "-----END PUBLIC KEY-----";
+      let pemContents = this.publicKey.replace(pemHeader, '').replace(pemFooter, '');
+      pemContents = pemContents.replace(/\s/g, '');
+      const binaryDerString = atob(pemContents);
+      const binaryDer = this.str2ab(binaryDerString);
+  
+      // Import the public key
+      const cryptoKey = await window.crypto.subtle.importKey(
+        'spki',
+        binaryDer,
+        {
+          name: "RSA-OAEP",
+          hash: { name: "SHA-256" }, // Specify the hash algorithm for OAEP
+        },
+        true,
+        ["encrypt"]
+      );
+  
+      // Encrypt the data
+      const encryptedData = await window.crypto.subtle.encrypt(
+      {
+        name: "RSA-OAEP",
+        hash: { name: "SHA-256" }
+      } as RsaOaepParams, // Explicitly asserting the type
+      cryptoKey,
+      enc.encode(data)
+    );
+
+    // Convert Uint8Array to binary string
+    const binaryString = Array.from(new Uint8Array(encryptedData), byte =>
+      String.fromCharCode(byte)
+    ).join('');
+
+    return btoa(binaryString);
+    } catch (error) {
+      console.error('Encryption error:', error);
+      return null;
+    }
+  }
+  
+  private str2ab(str: string): ArrayBuffer {
+    const buf = new ArrayBuffer(str.length);
+    const bufView = new Uint8Array(buf);
+    for (let i = 0, strLen = str.length; i < strLen; i++) {
+      bufView[i] = str.charCodeAt(i);
+    }
+    return buf;
   }
   
   private async fetchKey(): Promise<void> {
