@@ -1,0 +1,19 @@
+<ng-content></ng-content>
+
+<ng-container *ngFor="let fileFormGroup of filesArray.controls; let i = index">
+    <!-- File upload component for each file -->
+    <app-single-file-upload 
+        id="{{i}}"
+        style="display: none;"
+        [form]="fileFormGroup" 
+        controlName="file" 
+        [storageBucket]="storageBucket"
+        (onRemove)="remove(i, $event)"
+        (onChange)="onUploadChange($event)">
+    </app-single-file-upload>
+
+</ng-container>
+
+<!-- Hidden file input for triggering file selection -->
+<input type="file" #fileInput hidden aria-label="Input Selector" name="file-upload-input"
+    (change)="onFileSelected($event)" />

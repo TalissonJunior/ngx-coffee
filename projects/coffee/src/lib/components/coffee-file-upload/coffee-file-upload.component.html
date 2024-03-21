@@ -1,0 +1,21 @@
+<ng-container *ngIf="type == 'default'">
+    <app-single-file-upload
+        [form]="form"
+        [controlName]="controlName"
+        [storageBucket]="storageBucket"
+        (onNewFileUploaded)="onNewFileUploaded.next($event)">
+        <ng-container *ngTemplateOutlet="contentTpl"></ng-container>
+    </app-single-file-upload>
+</ng-container>
+
+<ng-container *ngIf="type == 'multiple'">
+    <app-multiple-file-upload
+        [form]="form"
+        [controlName]="controlName"
+        [storageBucket]="storageBucket"
+        (onNewFileUploaded)="onNewFileUploaded.next($event)">
+        <ng-container *ngTemplateOutlet="contentTpl"></ng-container>
+    </app-multiple-file-upload>
+</ng-container>
+
+<ng-template #contentTpl><ng-content></ng-content></ng-template>
