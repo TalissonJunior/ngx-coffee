@@ -9,6 +9,7 @@ import { CoffeeEncryptService } from "../services/coffee-encrypt.service";
 import { CoffeeRquestSave } from "./coffee-request-save";
 import { CoffeeRequestPostPut } from "./coffee-request-post-put";
 import { map } from 'rxjs/operators';
+import { CoffeeRequestDelete } from "./coffee-request-delete";
 
 export class CoffeeRequest {
   protected config = inject<IConfig>(CONFIG);
@@ -77,9 +78,9 @@ export class CoffeeRequest {
    * @param endpoint endpoint url "/myendpoint"
    * @param identifier the identifier to use as key for deleting
    */
-  delete<bool>(endpoint: string, identifier: number | string): Observable<bool> {
-    const url = CoffeeUtil.concatUrl(CoffeeUtil.concatUrl(this.baseEndpoint, endpoint), identifier);
-    return this.httpClient.delete<bool>(url);
+  delete<bool>(endpoint: string, identifier: number | string): CoffeeRequestDelete<bool> {
+    const url = CoffeeUtil.concatUrl(this.baseEndpoint, endpoint);
+    return new CoffeeRequestDelete<bool>(this.httpClient, url, identifier);
   }
 
   /**
