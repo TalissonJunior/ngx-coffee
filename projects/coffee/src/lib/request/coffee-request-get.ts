@@ -10,6 +10,7 @@ import {
 export class CoffeeRequestGet<T> {  
   private apiUrl: string;
   private queryParameters: CoffeeQueryFilter[] = [];
+  private authorizationToken: string | null = null;
 
   constructor(
     private httpClient: HttpClient,
@@ -145,6 +146,14 @@ export class CoffeeRequestGet<T> {
     return this;
   }
 
+  /**
+   * Sets the authorization token to be used in HTTP requests.
+   * @param token - The authorization token.
+   */
+  useAuthorizationToken(token: string): this {
+    this.authorizationToken = token;
+    return this;
+  }
 
   /**
   * @summary
@@ -172,8 +181,10 @@ export class CoffeeRequestGet<T> {
   returnSingleValue() {
     let url = '';
 
-    url = this.parseUrl(url);
-    return this.httpClient.get<T>(url);
+    url = this.parseUrl(url);  
+    const headers = this.getHeaders();
+
+    return this.httpClient.get<T>(url, { headers });
   }
 
   /**
@@ -188,8 +199,9 @@ export class CoffeeRequestGet<T> {
     let url = '';
 
     url = this.parseUrl(url);
+    const headers = this.getHeaders();
 
-    return this.httpClient.get<T>(url).pipe(
+    return this.httpClient.get<T>(url, { headers }).pipe(
       map(data => new type(data))
     );
   }
@@ -207,8 +219,9 @@ export class CoffeeRequestGet<T> {
     pagination?: { currentPage: number, pageSize: number }
   ) {
     const url = this.parseUrl('', pagination);
+    const headers = this.getHeaders();
 
-    return this.httpClient.get<FilterResponse<T>>(url).pipe(
+    return this.httpClient.get<FilterResponse<T>>(url, { headers }).pipe(
       map(data => {
         const values = data.data.map((entity: any) => {
           return new type(entity) as T
@@ -230,8 +243,9 @@ export class CoffeeRequestGet<T> {
    */
   returnListOf(type: new (val: T) => T) {
     const url = this.parseUrl();
+    const headers = this.getHeaders();
 
-    return this.httpClient.get<Array<T>>(url).pipe(
+    return this.httpClient.get<Array<T>>(url, { headers }).pipe(
       map((data: any) => {
         if (Array.isArray(data)) {
           return data.map((entity: any) => {
@@ -259,7 +273,9 @@ export class CoffeeRequestGet<T> {
    * });
    */
   download(fileNameWithExtension: string) {
-    const headers = new HttpHeaders().set('Content-Type', 'application/octet-stream');
+    let headers = this.getHeaders();
+    headers = headers.set('Content-Type', 'application/octet-stream');
+
     const url = this.parseUrl();
 
     return this.httpClient
@@ -274,6 +290,14 @@ export class CoffeeRequestGet<T> {
         return data;
       }
     ));
+  }
+
+  private getHeaders(): HttpHeaders {
+    let headers = new HttpHeaders();
+    if (this.authorizationToken) {
+      headers = headers.set('Authorization', this.authorizationToken);
+    }
+    return headers;
   }
 
   private parseUrl(

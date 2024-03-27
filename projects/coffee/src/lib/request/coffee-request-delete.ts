@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, Observer, Subscription } from 'rxjs';
 import { CoffeeUtil } from '../shared/coffee-util';
 
@@ -7,6 +7,7 @@ export class CoffeeRequestDelete<T> {
     protected url: string;
     protected queryParameters = Array<String>();
     protected identifier: number | string;
+    private authorizationToken: string | null = null;
 
     constructor(
         private httpClient: HttpClient,
@@ -54,18 +55,28 @@ export class CoffeeRequestDelete<T> {
     }
 
     /**
+     * Sets the authorization token to be used in HTTP requests.
+     * @param token - The authorization token.
+     */
+    useAuthorizationToken(token: string): this {
+        this.authorizationToken = token;
+        return this;
+    }
+
+    /**
      * Prepares and returns an Observable for the HTTP request, allowing further chaining with RxJS operators.
      * 
      * @returns {Observable<T>} An Observable that emits the result of the HTTP request.
      */
     prepare(): Observable<T> {
         this.url = CoffeeUtil.concatUrl(this.url, this.identifier);
+        const headers = this.getHeaders();
 
         if(this.queryParameters.length) {
             this.url = `${this.url}?${this.queryParameters.join("&")}`;
         }
 
-        return this.httpClient.delete<T>(this.url);
+        return this.httpClient.delete<T>(this.url, { headers });
     }
     
     /**
@@ -77,5 +88,13 @@ export class CoffeeRequestDelete<T> {
      */
     subscribe(observerOrNext?: Partial<Observer<T>> | ((value: T) => void) | undefined): Subscription {
         return this.prepare().subscribe(observerOrNext);
+    }
+    
+    private getHeaders(): HttpHeaders {
+        let headers = new HttpHeaders();
+        if (this.authorizationToken) {
+          headers = headers.set('Authorization', this.authorizationToken);
+        }
+        return headers;
     }
 }

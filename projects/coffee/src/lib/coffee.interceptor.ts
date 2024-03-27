@@ -16,7 +16,6 @@ import { map, catchError } from 'rxjs/operators';
 import { AuthUtils } from './auth/auth-utils';
 import { CONFIG, IConfig } from './coffee-config';
 
-
 @Injectable()
 export class CoffeeInterceptor implements HttpInterceptor {
   private config = inject<IConfig>(CONFIG);
@@ -66,17 +65,20 @@ export class CoffeeInterceptor implements HttpInterceptor {
     token: string,
     config: IConfig
   ): HttpRequest<any> {
-    // It will only add the token if the same exists and the request url matches the baseApiUrl
-    if (
-      !token || request.url.indexOf(config.baseApiUrl) < 0
-    ) {
-      return request;
+    // Check if the request already has an Authorization header and if the URL matches the baseApiUrl
+    const alreadyHasAuthHeader = request.headers.has('Authorization');
+    const isRequestToApi = request.url.indexOf(config.baseApiUrl) >= 0;
+
+    if (!alreadyHasAuthHeader && token && isRequestToApi) {
+      // Clone the request to add the new header
+      return request.clone({
+        setHeaders: {
+          Authorization: `Bearer ${token}`
+        }
+      });
     }
 
-    return request.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`
-      }
-    });
+    // Return the original request if no changes are needed
+    return request;
   }
 }

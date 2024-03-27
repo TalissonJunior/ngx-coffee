@@ -1,5 +1,5 @@
 import { inject } from "@angular/core";
-import { HttpClient } from "@angular/common/http";
+import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Observable } from "rxjs";
 import { CONFIG, IConfig } from "../coffee-config";
 import { CoffeeQueryFilter } from "./coffee-query-filter";
@@ -139,13 +139,20 @@ export class CoffeeRequest {
     endpoint: string, 
     model: any, 
     fileNameWithExtension: string, 
-    isFormData = true
+    isFormData = true,
+    authorizationToken = ''
   ): Observable<Blob> {
     const url = CoffeeUtil.concatUrl(this.baseEndpoint, endpoint);
     const data = isFormData ? CoffeeUtil.convertModelToFormData(model) : model;
+
+    let headers = new HttpHeaders();
+    if (authorizationToken) {
+      headers = headers.set('Authorization', authorizationToken);
+    }
+    
     const requestObservable = method === 'PUT' 
-      ? this.httpClient.put(url, data, { responseType: 'blob' }) 
-      : this.httpClient.post(url, data, { responseType: 'blob' });
+      ? this.httpClient.put(url, data, { headers, responseType: 'blob' }) 
+      : this.httpClient.post(url, data, { headers, responseType: 'blob' });
 
     return requestObservable.pipe<Blob>(
       map((data: Blob) => {
