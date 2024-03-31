@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input,OnInit, Output, QueryList, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input,OnInit, Output, QueryList, ViewChildren } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { CoffeeFileUploadContext } from './models/file-upload-context';
 import { SingleFileUploadComponent } from './single-file-upload/single-file-upload.component';
@@ -18,6 +18,7 @@ export class CoffeeFileUploadComponent implements OnInit, AfterViewInit {
   @Input() controlName: string;
   @Input() storageBucket = 'default';
   @Output() onNewFileUploaded = new Subject<any>();
+  @Output() hasFilesInProgress = new EventEmitter<boolean>();
 
   @ViewChildren(SingleFileUploadComponent) private fileUploadComponents: QueryList<SingleFileUploadComponent>;
   @ViewChildren(MultipleFileUploadComponent) private multipleFileUploadComponents: QueryList<MultipleFileUploadComponent>;
@@ -65,6 +66,23 @@ export class CoffeeFileUploadComponent implements OnInit, AfterViewInit {
     }
 
     return this.fileUploadComponents.first.context.click();
+  }
+
+  onFileUploadChange(file: CoffeeFileUpload | null): void {
+    if(file && (file as any).inProgress) {
+      this.hasFilesInProgress.next(true);
+      return;
+    }
+    else if(file){
+      this.onNewFileUploaded.next(file);
+    }
+
+    if(this.type == 'multiple') {
+      this.hasFilesInProgress.next(this.files.some(file => file.progress > 0 && file.progress < 100));
+    }
+    else {
+      this.hasFilesInProgress.next(this.file.progress > 0 && this.file.progress < 100);
+    }
   }
 
 }

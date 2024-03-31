@@ -88,10 +88,6 @@ export class SingleFileUploadComponent implements AfterViewInit, OnDestroy {
   }
 
   resetUpload(): void {
-    if (this.uploadedFile) {
-      this.removeUploadedFile(this.uploadedFile);
-    }
-
     this.uploadFailed = false;
     this.progressEmitter.next(0);
     this.form.get(this.controlName)?.setValue(null);
@@ -165,12 +161,6 @@ export class SingleFileUploadComponent implements AfterViewInit, OnDestroy {
   private getFileNameWithoutExtension(fileName: string): string {
     const lastDotIndex = fileName.lastIndexOf('.');
     return lastDotIndex !== -1 ? fileName.substring(0, lastDotIndex) : fileName;
-  }
-
-  private removeUploadedFile(file: CoffeeFileUpload): void {
-    if (file.id) {
-      this.coffeeService.delete(`fileupload/storage/${this.storageBucket}`, file.id).subscribe();
-    }
   }
 
   private handleFileChange(file: any): void {

@@ -1,4 +1,4 @@
-import { Component, Input, ViewChildren, QueryList, ElementRef, ViewChild, Output, ChangeDetectorRef} from '@angular/core';
+import { Component, Input, ViewChildren, QueryList, ElementRef, ViewChild, Output, ChangeDetectorRef, EventEmitter} from '@angular/core';
 import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
 import { SingleFileUploadComponent } from '../single-file-upload/single-file-upload.component';
 import { Subject } from 'rxjs';
@@ -15,7 +15,7 @@ export class MultipleFileUploadComponent {
   @Input() form: FormGroup;
   @Input() controlName: string;
   @Input() storageBucket: string;
-  @Output() onNewFileUploaded = new Subject<CoffeeFileUpload>();
+  @Output() onNewFileUploaded = new Subject<CoffeeFileUpload | null>();
   
   @ViewChildren(SingleFileUploadComponent) fileUploadComponents: QueryList<SingleFileUploadComponent>;
   @ViewChild('fileInput', { static: false }) fileInput: ElementRef<HTMLInputElement>;
@@ -75,16 +75,16 @@ export class MultipleFileUploadComponent {
   }
 
   onUploadChange(file: CoffeeFileUpload | null): void {
+    this.onNewFileUploaded.next(file);
+    
     if(file && (file as any).inProgress) {
       this.add();
     }
-    else if(file){
-      this.onNewFileUploaded.next(file);
-    }
-    this.cd.detectChanges(); 
+
+    this.cd.detectChanges();
   }
 
-  remove(index: number, file: CoffeeFileUpload): void {
+  remove(index: number): void {
     // Get the specific SingleFileUploadComponent instance by index
     const fileUploadComponent = this.fileUploadComponents.toArray()[index];
     if (fileUploadComponent) {

@@ -21,7 +21,8 @@ export class CoffeeRquestSave<T>  extends CoffeeRequestPostPut<T>{
     * @returns The SaveRequest instance for method chaining.
     */
     useHttpPutWhenId(): CoffeeRquestSave<T> {
-        if((this.data as any).id && (this.data as any).id > 0) {
+
+        if((this.vo as any).id && (this.vo as any).id > 0) {
             this.usePut = true;
         }
 

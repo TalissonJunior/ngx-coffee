@@ -3,7 +3,7 @@
         [form]="form"
         [controlName]="controlName"
         [storageBucket]="storageBucket"
-        (onNewFileUploaded)="onNewFileUploaded.next($event)">
+        (onChange)="onFileUploadChange($event)">
         <ng-container *ngTemplateOutlet="contentTpl"></ng-container>
     </app-single-file-upload>
 </ng-container>
@@ -13,7 +13,7 @@
         [form]="form"
         [controlName]="controlName"
         [storageBucket]="storageBucket"
-        (onNewFileUploaded)="onNewFileUploaded.next($event)">
+        (onNewFileUploaded)="onFileUploadChange($event)">
         <ng-container *ngTemplateOutlet="contentTpl"></ng-container>
     </app-multiple-file-upload>
 </ng-container>
