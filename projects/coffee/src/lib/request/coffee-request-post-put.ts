@@ -11,6 +11,7 @@ export class CoffeeRequestPostPut<T> {
     protected url: string;
     protected vo: T;
     protected queryParameters = Array<String>();
+    private authorizationToken: string | null = null;
 
     constructor(
         private httpClient: HttpClient,
@@ -38,7 +39,7 @@ export class CoffeeRequestPostPut<T> {
         return this;
     }
 
-        /**
+    /**
      * Appends a new segment to the current URL of the request.
      * This method allows for dynamic construction of endpoint URLs by concatenating
      * additional path segments. It's particularly useful when you need to build
@@ -95,19 +96,29 @@ export class CoffeeRequestPostPut<T> {
     }
 
     /**
+     * Sets the authorization token to be used in HTTP requests.
+     * @param token - The authorization token.
+     */
+    useAuthorizationToken(token: string): this {
+        this.authorizationToken = token;
+        return this;
+    }
+
+    /**
      * Prepares and returns an Observable for the HTTP request, allowing further chaining with RxJS operators.
      * 
      * @returns {Observable<T>} An Observable that emits the result of the HTTP request.
      */
     prepare(): Observable<T> {
         const requestData = this.encrypt ? from(this.encryptDataBeforeSend()) : from([this.data]);
+        let headers = this.getHeaders();
+
         return requestData.pipe(
             switchMap(data => {
                 if(this.queryParameters.length) {
                     this.url = `${this.url}?${this.queryParameters.join("&")}`;
                 }
 
-                let headers = new HttpHeaders();
                 if (this.encrypt && !(data instanceof FormData) && data != false) {
                     headers = headers.set('encrypted', 'true');
                 }
@@ -148,5 +159,13 @@ export class CoffeeRequestPostPut<T> {
         }
         const encryptedData = await this.encryptService.encrypt(this.data);
         return encryptedData;
+    }
+
+    private getHeaders(): HttpHeaders {
+        let headers = new HttpHeaders();
+        if (this.authorizationToken) {
+          headers = headers.set('Authorization', this.authorizationToken);
+        }
+        return headers;
     }
 }

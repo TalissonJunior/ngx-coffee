@@ -206,7 +206,7 @@ export class SingleFileUploadComponent implements AfterViewInit, OnDestroy {
     }, 200);
 
     // Replace with actual upload logic
-    this.coffeeService.save<CoffeeFileUpload>(`fileupload/storage/${this.storageBucket}`, { file: file } as any, true)
+    this.coffeeService.save<CoffeeFileUpload>(`coffee/file/storage/${this.storageBucket}`, { file: file } as any, true)
       .subscribe({
         next: (data) => {
           clearInterval(interval);

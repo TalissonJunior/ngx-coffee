@@ -1,5 +1,5 @@
 import { inject } from "@angular/core";
-import { HttpClient } from "@angular/common/http";
+import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Observable } from "rxjs";
 import { CONFIG, IConfig } from "../coffee-config";
 import { CoffeeQueryFilter } from "./coffee-query-filter";
@@ -9,6 +9,7 @@ import { CoffeeEncryptService } from "../services/coffee-encrypt.service";
 import { CoffeeRquestSave } from "./coffee-request-save";
 import { CoffeeRequestPostPut } from "./coffee-request-post-put";
 import { map } from 'rxjs/operators';
+import { CoffeeRequestDelete } from "./coffee-request-delete";
 
 export class CoffeeRequest {
   protected config = inject<IConfig>(CONFIG);
@@ -77,9 +78,9 @@ export class CoffeeRequest {
    * @param endpoint endpoint url "/myendpoint"
    * @param identifier the identifier to use as key for deleting
    */
-  delete<bool>(endpoint: string, identifier: number | string): Observable<bool> {
-    const url = CoffeeUtil.concatUrl(CoffeeUtil.concatUrl(this.baseEndpoint, endpoint), identifier);
-    return this.httpClient.delete<bool>(url);
+  delete<bool>(endpoint: string, identifier: number | string): CoffeeRequestDelete<bool> {
+    const url = CoffeeUtil.concatUrl(this.baseEndpoint, endpoint);
+    return new CoffeeRequestDelete<bool>(this.httpClient, url, identifier);
   }
 
   /**
@@ -138,13 +139,20 @@ export class CoffeeRequest {
     endpoint: string, 
     model: any, 
     fileNameWithExtension: string, 
-    isFormData = true
+    isFormData = true,
+    authorizationToken = ''
   ): Observable<Blob> {
     const url = CoffeeUtil.concatUrl(this.baseEndpoint, endpoint);
     const data = isFormData ? CoffeeUtil.convertModelToFormData(model) : model;
+
+    let headers = new HttpHeaders();
+    if (authorizationToken) {
+      headers = headers.set('Authorization', authorizationToken);
+    }
+    
     const requestObservable = method === 'PUT' 
-      ? this.httpClient.put(url, data, { responseType: 'blob' }) 
-      : this.httpClient.post(url, data, { responseType: 'blob' });
+      ? this.httpClient.put(url, data, { headers, responseType: 'blob' }) 
+      : this.httpClient.post(url, data, { headers, responseType: 'blob' });
 
     return requestObservable.pipe<Blob>(
       map((data: Blob) => {
