@@ -310,7 +310,9 @@ export class CoffeeAuthRequest<T> {
         AuthUtils.clearTokens();
         
         if (this.msalService.instance.getAllAccounts().length > 0) {
-            await this.msalService.instance.logout();
+            await this.msalService.instance.logout({
+                postLogoutRedirectUri: this.config.auth?.microsoft?.postLogoutRedirectUri ?? window.location.origin
+            });
         }
 
         this.currentUser = null;

@@ -95,7 +95,46 @@ export interface IMicrosoftAuthConfig {
      */
     redirectUri: string;
 
-     /**
+    /**
+     * postLogoutRedirectUri: string
+     *
+     * The Post-Logout Redirect URI specifies where the Microsoft Identity Platform should
+     * redirect the user's browser after the logout process has successfully completed. This URI
+     * is essential for maintaining a smooth user experience by guiding the user to a specific
+     * location after they have been logged out. For instance, you might want to redirect users
+     * to the application's home page, a "You have been logged out" page, or the login page for
+     * re-authentication.
+     *
+     * It's important that this URI is pre-registered in the Azure portal as part of your
+     * application's configuration settings. The Microsoft Identity Platform validates the 
+     * post-logout redirect URI against the registered URIs for security purposes. If the URI
+     * used at runtime isn't registered, the redirection will not occur as expected.
+     *
+     * Configuration in the Azure Portal:
+     * 1. Go to the Azure Portal (https://portal.azure.com/).
+     * 2. Navigate to "Azure Active Directory" > "App registrations".
+     * 3. Select your application.
+     * 4. Under "Authentication", add your post-logout redirect URI in the "Logout URL"
+     *    section.
+     *
+     * This URI can be absolute and point to any location that makes sense for your application's
+     * user flow. For development purposes, you might use a localhost address, but ensure to
+     * update this with the appropriate production URI before deploying your application.
+     *
+     * Usage Considerations:
+     * - Use HTTPS in production: For security reasons, it's recommended to use HTTPS URLs for
+     *   post-logout redirects in your production environment.
+     * - Keep user experience in mind: Choose a redirect URI that makes sense for your users 
+     *   and fits the flow of your application. For example, redirecting to a page that briefly 
+     *   informs the user they have been logged out before automatically navigating to the home 
+     *   page or login page can enhance clarity.
+     *
+     * Example:
+     * postLogoutRedirectUri: 'http://localhost:4200/logout'
+     */
+    postLogoutRedirectUri?: string;
+
+    /**
      * scopes?: Array<string> (Optional)
      *
      * An array of strings representing the Microsoft Graph permissions that your application
