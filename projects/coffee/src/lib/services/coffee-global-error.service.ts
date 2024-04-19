@@ -19,7 +19,7 @@ export class CoffeeGlobalErrorService implements ErrorHandler {
 
     const errorSignature = this.getErrorSignature(error);
     if (this.isErrorRecentlyLogged(errorSignature)) {
-      return;
+      throw error;
     }
 
     this.logError(error, errorSignature);
