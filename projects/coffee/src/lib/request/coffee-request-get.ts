@@ -2,10 +2,13 @@ import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { map } from "rxjs/operators";
 import { 
   CoffeeQueryFilter, sortBy, where, 
-  whereContains, whereDate, whereIn, 
+  whereContains, whereDay, whereMonth, whereYear,
+  whereDayAndMonth, whereDayAndYear, whereMonthAndYear, 
+  whereDayAndMonthAndYear, whereIn, 
   whereNotIn, whereOr, withQueryParameter,
   Pager, FilterResponse, whereIs
 } from ".";
+import { Moment } from "moment";
 
 export class CoffeeRequestGet<T> {  
   private apiUrl: string;
@@ -113,21 +116,106 @@ export class CoffeeRequestGet<T> {
 
   /**
    * @summary
-   * Search date by 'month', 'day'....
+   * Search date by 'day'
    * @example 
-   * 
-   * .where('createdAt', 'year', 2022)  
-   * .where((model) => model.createdAt, 'day', 2)
-   * .where((model) => model.createdAt, 'month', 4)
-   * .where((model) => model.createdAt, 'DD-YYYY', '04-2022')
-   * .where((model) => model.createdAt, 'DD-MM-YYYY', '27-10-2022')
+   * .whereDay('createdAt', moment())
+   * .whereDay((model) => model.createdAt, new Date())
    */
-  whereDate(
-    type: ((model: T) => string | Date) | string,
-    compare: 'day' | 'month' | 'year' | 'DD-MM' | 'DD-YYYY' | 'MM-YYYY' | 'DD-MM-YYYY',
-    value: string | number
-  ) {
-    this.queryParameters.push(whereDate(type, compare, value));
+  whereDay = (
+    type: ((model: any) => any) | string, 
+    value: Moment | Date
+  ) => {
+    this.queryParameters.push(whereDay(type, value));
+    return this;
+  }
+
+  /**
+  * @summary
+  * Search date by 'month'
+  * @example 
+  * .whereMonth('createdAt', moment())
+  * .whereMonth((model) => model.createdAt, new Date())
+  */
+  whereMonth = (
+    type: ((model: any) => any) | string, 
+    value: Moment | Date
+  ) => {
+    this.queryParameters.push(whereMonth(type, value));
+    return this;
+  }
+
+  /**
+  * @summary
+  * Search date by 'year'
+  * @example 
+  * .whereYear('createdAt', moment())
+  * .whereYear((model) => model.createdAt, new Date())
+  */
+  whereYear = (
+    type: ((model: any) => any) | string, 
+    value: Moment | Date
+  ) => {
+    this.queryParameters.push(whereYear(type, value));
+    return this;
+  }
+
+  /**
+  * @summary
+  * Search date by 'day' and 'month'
+  * @example 
+  * .whereYear('createdAt', moment())
+  * .whereYear((model) => model.createdAt, new Date())
+  */
+  whereDayAndMonth = (
+    type: ((model: any) => any) | string, 
+    value: Moment | Date
+  ) => {
+    this.queryParameters.push(whereDayAndMonth(type, value));
+    return this;
+  }
+
+  /**
+  * @summary
+  * Search date by 'day' and 'year'
+  * @example 
+  * .whereYear('createdAt', moment())
+  * .whereYear((model) => model.createdAt, new Date())
+  */
+  whereDayAndYear = (
+    type: ((model: any) => any) | string, 
+    value: Moment | Date
+  ) => {
+    this.queryParameters.push(whereDayAndYear(type, value));
+    return this;
+  }
+
+  /**
+  * @summary
+  * Search date by 'month' and 'year'
+  * @example 
+  * .whereYear('createdAt', moment())
+  * .whereYear((model) => model.createdAt, new Date())
+  */
+  whereMonthAndYear = (
+    type: ((model: any) => any) | string, 
+    value: Moment | Date
+  ) => {
+    this.queryParameters.push(whereMonthAndYear(type, value));
+    return this;
+  }
+
+  /**
+  * @summary
+  * Search date by 'day', 'month' and 'year'
+  * @example 
+  * .whereYear('createdAt', moment())
+  * .whereYear((model) => model.createdAt, new Date())
+  */
+  whereDayAndMonthAndYear = (
+    type: ((model: any) => any) | string, 
+    value: Moment | Date
+  ) => {
+    this.queryParameters.push(whereDayAndMonthAndYear(type, value));
     return this;
   }
 

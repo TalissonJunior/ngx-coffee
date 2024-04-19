@@ -1,3 +1,5 @@
+import * as moment from "moment";
+import { Moment } from "moment";
 
 export interface CoffeeQueryFilter { 
     expression: string;
@@ -144,110 +146,124 @@ export const whereNotIn = (
 
 /**
  * @summary
- * Search date by 'month', 'day'....
+ * Search date by 'day'
  * @example 
- * .where('createdAt', 'year', 2022)
- * .where((model) => model.createdAt, 'day', 2)
- * .where((model) => model.createdAt, 'month', 4)
- * .where((model) => model.createdAt, 'DD-YYYY', '04-2022')
- * .where((model) => model.createdAt, 'DD-MM-YYYY', '27-10-2022')
+ * .whereDay('createdAt', moment())
+ * .whereDay((model) => model.createdAt, new Date())
  */
- export const whereDate = (
+export const whereDay = (
     type: ((model: any) => any) | string, 
-    compare: 'day' | 'month' | 'year' | 'DD-MM' | 'DD-YYYY' | 'MM-YYYY' | 'DD-MM-YYYY',  
-    value: string | number
+    value: Moment | Date
 ): CoffeeQueryFilter => {
     const propertyName = getPropertyName(type);
-
-    const getExpression = (
-        typeFormat: 'day' | 'month' | 'year' | null, 
-        formattedValue?: string | number
-    ) => {
-        if(!typeFormat) {
-            return '';
-        }
-
-        return `${propertyName}=${typeFormat}=${formattedValue}`;
-    }
-
-    const getValueBySplitPosition = (position: number = 0): string => {
-        const splitValue = value.toString().split('-');
-        
-        if(splitValue.length <= 0) {
-            return '';
-        }
-
-        if(splitValue.length > position) {
-            return splitValue[position];
-        }
-
-        return '';
-    }
-
-    if(compare == 'day' || compare == 'month' || compare == 'year') {
-        return {
-            expression: getExpression(compare, value),
-            type: 'filter'
-        }
-    }
-    else if(compare == 'DD-MM') {
-        const day = getValueBySplitPosition(0);
-        const month = getValueBySplitPosition(1);
-
-        if(!day || !month) {
-            return { expression: '', type: 'filter'};
-        }
-
-        return {
-            expression: getExpression('day', day) + ',' + getExpression('month', month),
-            type: 'filter'
-        }
-    }
-    else if(compare == 'DD-YYYY') {
-        const day = getValueBySplitPosition(0);
-        const year = getValueBySplitPosition(1);
-
-        if(!day || !year) {
-            return { expression: '', type: 'filter' };
-        }
-
-        return {
-            expression: getExpression('day', day) + ',' + getExpression('year', year),
-            type: 'filter'
-        }
-    }
-    else if(compare == 'MM-YYYY') {
-        const month = getValueBySplitPosition(0);
-        const year = getValueBySplitPosition(1);
-
-        if(!month || !year) {
-            return { expression: '', type: 'filter' };
-        }
-
-        return {
-            expression: getExpression('month', month) + ',' + getExpression('year', year),
-            type: 'filter'
-        }
-    }
-    else if(compare == 'DD-MM-YYYY') {
-        const day = getValueBySplitPosition(0);
-        const month = getValueBySplitPosition(1);
-        const year = getValueBySplitPosition(2);
-
-        if(!day || !month || !year) {
-            return { expression: '', type: 'filter' };
-        }
-
-        return {
-            expression: getExpression('day', day) + ',' + getExpression('month', month) + ',' + getExpression('year', year),
-            type: 'filter'
-        }
-    }
-
     return {
-        expression: ``,
+        expression:`${propertyName}=day=${moment(value).format("DD")}`,
         type: 'filter'
-    };
+    }
+}
+
+/**
+ * @summary
+ * Search date by 'month'
+ * @example 
+ * .whereMonth('createdAt', moment())
+ * .whereMonth((model) => model.createdAt, new Date())
+ */
+export const whereMonth = (
+    type: ((model: any) => any) | string, 
+    value: Moment | Date
+): CoffeeQueryFilter => {
+    const propertyName = getPropertyName(type);
+    return {
+        expression:`${propertyName}=month=${moment(value).format("M")}`,
+        type: 'filter'
+    }
+}
+
+/**
+ * @summary
+ * Search date by 'year'
+ * @example 
+ * .whereYear('createdAt', moment())
+ * .whereYear((model) => model.createdAt, new Date())
+ */
+export const whereYear = (
+    type: ((model: any) => any) | string, 
+    value: Moment | Date
+): CoffeeQueryFilter => {
+    const propertyName = getPropertyName(type);
+    return {
+        expression:`${propertyName}=year=${moment(value).format("YYYY")}`,
+        type: 'filter'
+    }
+}
+
+/**
+ * @summary
+ * Search date by 'day' and 'month'
+ * @example 
+ * .whereYear('createdAt', moment())
+ * .whereYear((model) => model.createdAt, new Date())
+ */
+export const whereDayAndMonth = (
+    type: ((model: any) => any) | string, 
+    value: Moment | Date
+): CoffeeQueryFilter => {
+    return {
+        expression:`${whereDay(type, value).expression},${whereMonth(type, value).expression}`,
+        type: 'filter'
+    }
+}
+
+/**
+ * @summary
+ * Search date by 'day' and 'year'
+ * @example 
+ * .whereYear('createdAt', moment())
+ * .whereYear((model) => model.createdAt, new Date())
+ */
+export const whereDayAndYear = (
+    type: ((model: any) => any) | string, 
+    value: Moment | Date
+): CoffeeQueryFilter => {
+    return {
+        expression:`${whereDay(type, value).expression},${whereYear(type, value).expression}`,
+        type: 'filter'
+    }
+}
+
+/**
+ * @summary
+ * Search date by 'month' and 'year'
+ * @example 
+ * .whereYear('createdAt', moment())
+ * .whereYear((model) => model.createdAt, new Date())
+ */
+export const whereMonthAndYear = (
+    type: ((model: any) => any) | string, 
+    value: Moment | Date
+): CoffeeQueryFilter => {
+    return {
+        expression:`${whereMonth(type, value).expression},${whereYear(type, value).expression}`,
+        type: 'filter'
+    }
+}
+
+/**
+ * @summary
+ * Search date by 'day', 'month' and 'year'
+ * @example 
+ * .whereYear('createdAt', moment())
+ * .whereYear((model) => model.createdAt, new Date())
+ */
+export const whereDayAndMonthAndYear = (
+    type: ((model: any) => any) | string, 
+    value: Moment | Date
+): CoffeeQueryFilter => {
+    return {
+        expression:`${whereDay(type, value).expression},${whereMonth(type, value).expression},${whereYear(type, value).expression}`,
+        type: 'filter'
+    }
 }
 
 /**
