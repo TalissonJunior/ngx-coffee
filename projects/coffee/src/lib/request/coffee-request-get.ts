@@ -8,7 +8,6 @@ import {
   whereNotIn, whereOr, withQueryParameter,
   Pager, FilterResponse, whereIs
 } from ".";
-import { Moment } from "moment";
 
 export class CoffeeRequestGet<T> {  
   private apiUrl: string;
@@ -123,7 +122,7 @@ export class CoffeeRequestGet<T> {
    */
   whereDay = (
     type: ((model: any) => any) | string, 
-    value: Moment | Date
+    value: moment.Moment | Date
   ) => {
     this.queryParameters.push(whereDay(type, value));
     return this;
@@ -138,7 +137,7 @@ export class CoffeeRequestGet<T> {
   */
   whereMonth = (
     type: ((model: any) => any) | string, 
-    value: Moment | Date
+    value: moment.Moment | Date
   ) => {
     this.queryParameters.push(whereMonth(type, value));
     return this;
@@ -153,7 +152,7 @@ export class CoffeeRequestGet<T> {
   */
   whereYear = (
     type: ((model: any) => any) | string, 
-    value: Moment | Date
+    value: moment.Moment | Date
   ) => {
     this.queryParameters.push(whereYear(type, value));
     return this;
@@ -168,7 +167,7 @@ export class CoffeeRequestGet<T> {
   */
   whereDayAndMonth = (
     type: ((model: any) => any) | string, 
-    value: Moment | Date
+    value: moment.Moment | Date
   ) => {
     this.queryParameters.push(whereDayAndMonth(type, value));
     return this;
@@ -183,7 +182,7 @@ export class CoffeeRequestGet<T> {
   */
   whereDayAndYear = (
     type: ((model: any) => any) | string, 
-    value: Moment | Date
+    value: moment.Moment | Date
   ) => {
     this.queryParameters.push(whereDayAndYear(type, value));
     return this;
@@ -198,7 +197,7 @@ export class CoffeeRequestGet<T> {
   */
   whereMonthAndYear = (
     type: ((model: any) => any) | string, 
-    value: Moment | Date
+    value: moment.Moment | Date
   ) => {
     this.queryParameters.push(whereMonthAndYear(type, value));
     return this;
@@ -213,7 +212,7 @@ export class CoffeeRequestGet<T> {
   */
   whereDayAndMonthAndYear = (
     type: ((model: any) => any) | string, 
-    value: Moment | Date
+    value: moment.Moment | Date
   ) => {
     this.queryParameters.push(whereDayAndMonthAndYear(type, value));
     return this;

@@ -1,5 +1,4 @@
 import * as moment from "moment";
-import { Moment } from "moment";
 
 export interface CoffeeQueryFilter { 
     expression: string;
@@ -153,7 +152,7 @@ export const whereNotIn = (
  */
 export const whereDay = (
     type: ((model: any) => any) | string, 
-    value: Moment | Date
+    value: moment.Moment | Date
 ): CoffeeQueryFilter => {
     const propertyName = getPropertyName(type);
     return {
@@ -171,7 +170,7 @@ export const whereDay = (
  */
 export const whereMonth = (
     type: ((model: any) => any) | string, 
-    value: Moment | Date
+    value: moment.Moment | Date
 ): CoffeeQueryFilter => {
     const propertyName = getPropertyName(type);
     return {
@@ -189,7 +188,7 @@ export const whereMonth = (
  */
 export const whereYear = (
     type: ((model: any) => any) | string, 
-    value: Moment | Date
+    value: moment.Moment | Date
 ): CoffeeQueryFilter => {
     const propertyName = getPropertyName(type);
     return {
@@ -207,7 +206,7 @@ export const whereYear = (
  */
 export const whereDayAndMonth = (
     type: ((model: any) => any) | string, 
-    value: Moment | Date
+    value: moment.Moment | Date
 ): CoffeeQueryFilter => {
     return {
         expression:`${whereDay(type, value).expression},${whereMonth(type, value).expression}`,
@@ -224,7 +223,7 @@ export const whereDayAndMonth = (
  */
 export const whereDayAndYear = (
     type: ((model: any) => any) | string, 
-    value: Moment | Date
+    value: moment.Moment | Date
 ): CoffeeQueryFilter => {
     return {
         expression:`${whereDay(type, value).expression},${whereYear(type, value).expression}`,
@@ -241,7 +240,7 @@ export const whereDayAndYear = (
  */
 export const whereMonthAndYear = (
     type: ((model: any) => any) | string, 
-    value: Moment | Date
+    value: moment.Moment | Date
 ): CoffeeQueryFilter => {
     return {
         expression:`${whereMonth(type, value).expression},${whereYear(type, value).expression}`,
@@ -258,7 +257,7 @@ export const whereMonthAndYear = (
  */
 export const whereDayAndMonthAndYear = (
     type: ((model: any) => any) | string, 
-    value: Moment | Date
+    value: moment.Moment | Date
 ): CoffeeQueryFilter => {
     return {
         expression:`${whereDay(type, value).expression},${whereMonth(type, value).expression},${whereYear(type, value).expression}`,
