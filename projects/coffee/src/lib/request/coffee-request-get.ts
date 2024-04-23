@@ -117,12 +117,12 @@ export class CoffeeRequestGet<T> {
    * @summary
    * Search date by 'day'
    * @example 
-   * .whereDay('createdAt', moment())
+   * .whereDay('createdAt', new Date())
    * .whereDay((model) => model.createdAt, new Date())
    */
   whereDay = (
     type: ((model: any) => any) | string, 
-    value: moment.Moment | Date
+    value: Date
   ) => {
     this.queryParameters.push(whereDay(type, value));
     return this;
@@ -132,12 +132,12 @@ export class CoffeeRequestGet<T> {
   * @summary
   * Search date by 'month'
   * @example 
-  * .whereMonth('createdAt', moment())
+  * .whereMonth('createdAt', new Date())
   * .whereMonth((model) => model.createdAt, new Date())
   */
   whereMonth = (
     type: ((model: any) => any) | string, 
-    value: moment.Moment | Date
+    value: Date
   ) => {
     this.queryParameters.push(whereMonth(type, value));
     return this;
@@ -147,12 +147,12 @@ export class CoffeeRequestGet<T> {
   * @summary
   * Search date by 'year'
   * @example 
-  * .whereYear('createdAt', moment())
+  * .whereYear('createdAt', new Date())
   * .whereYear((model) => model.createdAt, new Date())
   */
   whereYear = (
     type: ((model: any) => any) | string, 
-    value: moment.Moment | Date
+    value: Date
   ) => {
     this.queryParameters.push(whereYear(type, value));
     return this;
@@ -162,12 +162,12 @@ export class CoffeeRequestGet<T> {
   * @summary
   * Search date by 'day' and 'month'
   * @example 
-  * .whereYear('createdAt', moment())
+  * .whereYear('createdAt', new Date())
   * .whereYear((model) => model.createdAt, new Date())
   */
   whereDayAndMonth = (
     type: ((model: any) => any) | string, 
-    value: moment.Moment | Date
+    value: Date
   ) => {
     this.queryParameters.push(whereDayAndMonth(type, value));
     return this;
@@ -177,12 +177,12 @@ export class CoffeeRequestGet<T> {
   * @summary
   * Search date by 'day' and 'year'
   * @example 
-  * .whereYear('createdAt', moment())
+  * .whereYear('createdAt', new Date())
   * .whereYear((model) => model.createdAt, new Date())
   */
   whereDayAndYear = (
     type: ((model: any) => any) | string, 
-    value: moment.Moment | Date
+    value: Date
   ) => {
     this.queryParameters.push(whereDayAndYear(type, value));
     return this;
@@ -192,12 +192,12 @@ export class CoffeeRequestGet<T> {
   * @summary
   * Search date by 'month' and 'year'
   * @example 
-  * .whereYear('createdAt', moment())
+  * .whereYear('createdAt', new Date())
   * .whereYear((model) => model.createdAt, new Date())
   */
   whereMonthAndYear = (
     type: ((model: any) => any) | string, 
-    value: moment.Moment | Date
+    value: Date
   ) => {
     this.queryParameters.push(whereMonthAndYear(type, value));
     return this;
@@ -207,12 +207,12 @@ export class CoffeeRequestGet<T> {
   * @summary
   * Search date by 'day', 'month' and 'year'
   * @example 
-  * .whereYear('createdAt', moment())
+  * .whereYear('createdAt', new Date())
   * .whereYear((model) => model.createdAt, new Date())
   */
   whereDayAndMonthAndYear = (
     type: ((model: any) => any) | string, 
-    value: moment.Moment | Date
+    value: Date
   ) => {
     this.queryParameters.push(whereDayAndMonthAndYear(type, value));
     return this;

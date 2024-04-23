@@ -1,5 +1,3 @@
-import * as moment from "moment";
-
 export interface CoffeeQueryFilter { 
     expression: string;
     type: 'sort' | 'filter' | 'parameter'
@@ -147,16 +145,21 @@ export const whereNotIn = (
  * @summary
  * Search date by 'day'
  * @example 
- * .whereDay('createdAt', moment())
+ * .whereDay('createdAt', new Date())
  * .whereDay((model) => model.createdAt, new Date())
  */
 export const whereDay = (
     type: ((model: any) => any) | string, 
-    value: moment.Moment | Date
+    value: Date
 ): CoffeeQueryFilter => {
     const propertyName = getPropertyName(type);
+
+    // Format the day to always be two digits
+    const day = value.getDate();
+    const formattedDay = day < 10 ? `0${day}` : day.toString();
+
     return {
-        expression:`${propertyName}=day=${moment(value).format("DD")}`,
+        expression: `${propertyName}=day=${formattedDay}`,
         type: 'filter'
     }
 }
@@ -165,16 +168,20 @@ export const whereDay = (
  * @summary
  * Search date by 'month'
  * @example 
- * .whereMonth('createdAt', moment())
+ * .whereMonth('createdAt', new Date())
  * .whereMonth((model) => model.createdAt, new Date())
  */
 export const whereMonth = (
     type: ((model: any) => any) | string, 
-    value: moment.Moment | Date
+    value: Date
 ): CoffeeQueryFilter => {
     const propertyName = getPropertyName(type);
+
+    // Adjust the month to be 1-based and format it to always be a number
+    const month = value.getMonth() + 1; // getMonth() is zero-based, add 1 to make it 1-based
+
     return {
-        expression:`${propertyName}=month=${moment(value).format("M")}`,
+        expression: `${propertyName}=month=${month}`,
         type: 'filter'
     }
 }
@@ -183,16 +190,20 @@ export const whereMonth = (
  * @summary
  * Search date by 'year'
  * @example 
- * .whereYear('createdAt', moment())
+ * .whereYear('createdAt', new Date())
  * .whereYear((model) => model.createdAt, new Date())
  */
 export const whereYear = (
     type: ((model: any) => any) | string, 
-    value: moment.Moment | Date
+    value: Date
 ): CoffeeQueryFilter => {
     const propertyName = getPropertyName(type);
+
+    // Use getFullYear to obtain the year from the Date object
+    const year = value.getFullYear();
+
     return {
-        expression:`${propertyName}=year=${moment(value).format("YYYY")}`,
+        expression: `${propertyName}=year=${year}`,
         type: 'filter'
     }
 }
@@ -201,12 +212,12 @@ export const whereYear = (
  * @summary
  * Search date by 'day' and 'month'
  * @example 
- * .whereYear('createdAt', moment())
+ * .whereYear('createdAt', new Date())
  * .whereYear((model) => model.createdAt, new Date())
  */
 export const whereDayAndMonth = (
     type: ((model: any) => any) | string, 
-    value: moment.Moment | Date
+    value: Date
 ): CoffeeQueryFilter => {
     return {
         expression:`${whereDay(type, value).expression},${whereMonth(type, value).expression}`,
@@ -218,12 +229,12 @@ export const whereDayAndMonth = (
  * @summary
  * Search date by 'day' and 'year'
  * @example 
- * .whereYear('createdAt', moment())
+ * .whereYear('createdAt', new Date())
  * .whereYear((model) => model.createdAt, new Date())
  */
 export const whereDayAndYear = (
     type: ((model: any) => any) | string, 
-    value: moment.Moment | Date
+    value: Date
 ): CoffeeQueryFilter => {
     return {
         expression:`${whereDay(type, value).expression},${whereYear(type, value).expression}`,
@@ -235,12 +246,12 @@ export const whereDayAndYear = (
  * @summary
  * Search date by 'month' and 'year'
  * @example 
- * .whereYear('createdAt', moment())
+ * .whereYear('createdAt', new Date())
  * .whereYear((model) => model.createdAt, new Date())
  */
 export const whereMonthAndYear = (
     type: ((model: any) => any) | string, 
-    value: moment.Moment | Date
+    value: Date
 ): CoffeeQueryFilter => {
     return {
         expression:`${whereMonth(type, value).expression},${whereYear(type, value).expression}`,
@@ -252,12 +263,12 @@ export const whereMonthAndYear = (
  * @summary
  * Search date by 'day', 'month' and 'year'
  * @example 
- * .whereYear('createdAt', moment())
+ * .whereYear('createdAt', new Date())
  * .whereYear((model) => model.createdAt, new Date())
  */
 export const whereDayAndMonthAndYear = (
     type: ((model: any) => any) | string, 
-    value: moment.Moment | Date
+    value: Date
 ): CoffeeQueryFilter => {
     return {
         expression:`${whereDay(type, value).expression},${whereMonth(type, value).expression},${whereYear(type, value).expression}`,
