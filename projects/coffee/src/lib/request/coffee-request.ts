@@ -10,6 +10,7 @@ import { CoffeeRquestSave } from "./coffee-request-save";
 import { CoffeeRequestPostPut } from "./coffee-request-post-put";
 import { map } from 'rxjs/operators';
 import { CoffeeRequestDelete } from "./coffee-request-delete";
+import { CoffeeRequestDownload } from "./coffee-request-download";
 
 export class CoffeeRequest {
   protected config = inject<IConfig>(CONFIG);
@@ -84,88 +85,15 @@ export class CoffeeRequest {
   }
 
   /**
-   * Downloads a file from the server and saves it with the given file name.
+   * requests a file from the server.
    *
    * @param endpoint - The url of the endpoint.
    * @param model - The model (e.g { file : file }).
-   * @param fileNameWithExtension - The desired file name, including the file extension (e.g., 'file.xlsx').
    * @param isFormData whether to send the data as form data or json
-   * @returns An Observable that completes when the file has been downloaded.
    *
-   * Usage example:
-   * .downloadPut('url', form, 'file.xlsx').subscribe(() => {
-   *   console.log('File downloaded successfully');
-   * });
    */
-   downloadPut(endpoint: string, model: any, fileNameWithExtension: string, isFormData = true) {
-    return this.downloadFile('PUT', endpoint, model, fileNameWithExtension, isFormData);
-  }
-
-  /**
-   * Downloads a file from the server and saves it with the given file name.
-   *
-   * @param endpoint - The url of the endpoint.
-   * @param model - The model (e.g { file : file }).
-   * @param fileNameWithExtension - The desired file name, including the file extension (e.g., 'file.xlsx').
-   * @param isFormData whether to send the data as form data or json
-   * @returns An Observable that completes when the file has been downloaded.
-   *
-   * Usage example:
-   * .downloadPost('url', form, 'file.xlsx').subscribe(() => {
-   *   console.log('File downloaded successfully');
-   * });
-   */
-  downloadPost(endpoint: string, model: any, fileNameWithExtension: string, isFormData = true) {
-    return this.downloadFile('POST', endpoint, model, fileNameWithExtension, isFormData);
-  }
-
-  /**
-   * Downloads a file from the server using either PUT or POST method and saves it with the given file name.
-   *
-   * @param method - The HTTP method to use ('PUT' or 'POST').
-   * @param endpoint - The URL of the endpoint.
-   * @param model - The model to send (e.g., { file: file }).
-   * @param fileNameWithExtension - The desired file name, including the file extension (e.g., 'file.xlsx').
-   * @param isFormData - Whether to send the data as FormData or JSON.
-   * @returns An Observable that completes when the file has been downloaded.
-   *
-   * Usage example:
-   * .downloadFile('PUT', 'url', form, 'file.xlsx').subscribe(() => {
-   *   console.log('File downloaded successfully');
-   * });
-   */
-  private downloadFile(
-    method: 'PUT' | 'POST', 
-    endpoint: string, 
-    model: any, 
-    fileNameWithExtension: string, 
-    isFormData = true,
-    authorizationToken = ''
-  ): Observable<Blob> {
+  requestDownload(endpoint: string, model: any, isFormData = true) {
     const url = CoffeeUtil.concatUrl(this.baseEndpoint, endpoint);
-    const data = isFormData ? CoffeeUtil.convertModelToFormData(model) : model;
-
-    let headers = new HttpHeaders();
-    if (authorizationToken) {
-      headers = headers.set('Authorization', authorizationToken);
-    }
-    
-    const requestObservable = method === 'PUT' 
-      ? this.httpClient.put(url, data, { headers, responseType: 'blob' }) 
-      : this.httpClient.post(url, data, { headers, responseType: 'blob' });
-
-    return requestObservable.pipe<Blob>(
-      map((data: Blob) => {
-        const downloadUrl = window.URL.createObjectURL(data);
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = fileNameWithExtension;
-        document.body.appendChild(link); // Ensure the link is in the document
-        link.click();
-        window.URL.revokeObjectURL(downloadUrl);
-        link.remove(); // Clean up the link element
-        return data;
-      })
-    );
+    return new CoffeeRequestDownload(this.httpClient, url, model, isFormData);
   }
 }
