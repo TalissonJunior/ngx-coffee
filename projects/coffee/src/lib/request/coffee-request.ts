@@ -92,7 +92,7 @@ export class CoffeeRequest {
    * @param isFormData whether to send the data as form data or json
    *
    */
-  requestDownload(endpoint: string, model: any, isFormData = true) {
+  requestDownload(endpoint: string, model: any, isFormData: boolean = false) {
     const url = CoffeeUtil.concatUrl(this.baseEndpoint, endpoint);
     return new CoffeeRequestDownload(this.httpClient, url, model, isFormData);
   }

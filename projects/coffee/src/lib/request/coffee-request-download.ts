@@ -15,7 +15,7 @@ export class CoffeeRequestDownload<T> {
         private httpClient: HttpClient,
         endpoint: string,
         private model: T,
-        private isFormData = true
+        private isFormData: boolean = false
     ) {
         this.apiUrl = endpoint;
     }
@@ -48,6 +48,7 @@ export class CoffeeRequestDownload<T> {
      * Downloads a file from the server and saves it with the given file name.
      *
      * @param fileNameWithExtension - The desired file name, including the file extension (e.g., 'file.xlsx').
+     * @param useJsonContentType - Determines if 'application/json' should be used as the Content-Type.
      * @returns An Observable that completes when the file has been downloaded.
      *
      * Usage example:
@@ -55,8 +56,8 @@ export class CoffeeRequestDownload<T> {
      *   console.log('File downloaded successfully');
      * });
      */
-    downloadFileUsingPut(fileNameWithExtension: string): Observable<Blob> {
-        return this.downloadFile('PUT', fileNameWithExtension);
+    downloadFileUsingPut(fileNameWithExtension: string, useJsonContentType: boolean = false): Observable<Blob> {
+        return this.downloadFile('PUT', fileNameWithExtension, useJsonContentType);
     }
 
 
@@ -64,6 +65,7 @@ export class CoffeeRequestDownload<T> {
      * Downloads a file from the server and saves it with the given file name.
      *
      * @param fileNameWithExtension - The desired file name, including the file extension (e.g., 'file.xlsx').
+     * @param useJsonContentType - Determines if 'application/json' should be used as the Content-Type.
      * @returns An Observable that completes when the file has been downloaded.
      *
      * Usage example:
@@ -71,18 +73,16 @@ export class CoffeeRequestDownload<T> {
      *   console.log('File downloaded successfully');
      * });
      */
-    downloadFileUsingPost(fileNameWithExtension: string): Observable<Blob> {
-        return this.downloadFile('POST', fileNameWithExtension);
+    downloadFileUsingPost(fileNameWithExtension: string, useJsonContentType: boolean = false): Observable<Blob> {
+        return this.downloadFile('POST', fileNameWithExtension, useJsonContentType);
     }
 
     /**
     * Downloads a file from the server using either PUT or POST method and saves it with the given file name.
     *
     * @param method - The HTTP method to use ('PUT' or 'POST').
-    * @param endpoint - The URL of the endpoint.
-    * @param model - The model to send (e.g., { file: file }).
     * @param fileNameWithExtension - The desired file name, including the file extension (e.g., 'file.xlsx').
-    * @param isFormData - Whether to send the data as FormData or JSON.
+    *@param useJsonContentType - Determines if 'application/json' should be used as the Content-Type.
     * @returns An Observable that completes when the file has been downloaded.
     *
     * Usage example:
@@ -93,9 +93,9 @@ export class CoffeeRequestDownload<T> {
     private downloadFile(
         method: 'PUT' | 'POST',
         fileNameWithExtension: string,
+        useJsonContentType: boolean = false
     ): Observable<Blob> {
-        let headers = this.getHeaders();
-        headers = headers.set('Content-Type', 'application/octet-stream');
+        let headers = this.getHeaders(useJsonContentType);
 
         const url = this.parseUrl();
         const data = this.isFormData ? CoffeeUtil.convertModelToFormData(this.model) : this.model;
@@ -119,11 +119,15 @@ export class CoffeeRequestDownload<T> {
         );
     }
 
-    private getHeaders(): HttpHeaders {
+    private getHeaders(useJsonContentType: boolean): HttpHeaders {
         let headers = new HttpHeaders();
         if (this.authorizationToken) {
             headers = headers.set('Authorization', this.authorizationToken);
         }
+
+        const contentType = useJsonContentType ? 'application/json' : 'application/octet-stream';
+        headers = headers.set('Content-Type', contentType);
+
         return headers;
     }
 
