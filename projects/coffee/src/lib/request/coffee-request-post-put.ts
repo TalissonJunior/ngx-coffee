@@ -3,6 +3,7 @@ import { Observable, Observer, Subscription, from } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { CoffeeEncryptService } from '../services/coffee-encrypt.service';
 import { CoffeeUtil } from '../shared/coffee-util';
+import { IConfig } from '../coffee-config';
 
 export class CoffeeRequestPostPut<T> {
     protected usePut: boolean = false;
@@ -20,6 +21,7 @@ export class CoffeeRequestPostPut<T> {
         vo: T,
         usePut: boolean,
         private isFormData: boolean = false,
+        private config: IConfig
     ) {
         this.usePut = usePut;
         this.vo = vo;
@@ -27,15 +29,20 @@ export class CoffeeRequestPostPut<T> {
         this.data = isFormData ? CoffeeUtil.convertModelToFormData(vo) : vo;
     }
 
-    /**
+     /**
     * Marks the request data to be encrypted before sending. This method will only
     * encrypt the data if `isFormData` is set to false, as encryption is not applied
     * to FormData objects. If `isFormData` is true, calling this method will not
     * affect the request data.
-    * 
+    *
+    * This method respects the `disableEncryption` setting in the application configuration.
+    * If `disableEncryption` is set to true in the configuration, encryption will be bypassed
+    * regardless of the `isFormData` value.
+    *
+    * @returns {CoffeeRequestPostPut<T>} The current instance of the request with encryption settings applied.
     */
     withEncryption(): CoffeeRequestPostPut<T> {
-        this.encrypt = true;
+        this.encrypt = this.config.disableEncryption ? false : true;
         return this;
     }
 

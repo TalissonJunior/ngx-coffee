@@ -107,7 +107,7 @@ export class CoffeeEncryptService {
       );
       this.publicKey = snapshot as any;
     } catch (error) {
-      if (this.config.disableEncryptErrorLogs) {
+      if (this.config.disableEncryptErrorLogs || this.config.disableEncryption) {
         return;
       }
 

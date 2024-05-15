@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { CoffeeEncryptService } from '../services/coffee-encrypt.service';
 import { CoffeeRequestPostPut } from './coffee-request-post-put';
+import { IConfig } from '../coffee-config';
 
 export class CoffeeRquestSave<T>  extends CoffeeRequestPostPut<T>{
 
@@ -9,9 +10,10 @@ export class CoffeeRquestSave<T>  extends CoffeeRequestPostPut<T>{
         encryptService: CoffeeEncryptService,
         url: string,
         vo: T,
-        isFormData: boolean = false
+        isFormData: boolean = false,
+        config: IConfig
     ) {
-        super(httpClient, encryptService, url, vo, false, isFormData);
+        super(httpClient, encryptService, url, vo, false, isFormData, config);
     }
 
     /**

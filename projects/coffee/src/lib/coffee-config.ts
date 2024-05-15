@@ -246,6 +246,24 @@ export interface IConfig {
     disableEncryptErrorLogs?: Boolean;
 
     /**
+     * disableEncryption: Boolean
+     *
+     * Determines whether the application will perform encryption operations.
+     * When set to true, all encryption processes will be bypassed, which can be useful
+     * in development or testing environments where encryption is not needed or to
+     * simplify debugging. When set to false, the application will perform encryption
+     * operations as configured.
+     *
+     * It is recommended to set this to false in production environments to ensure
+     * that sensitive data is always encrypted.
+     *
+     * Example:
+     * disableEncryption: true  // Bypasses encryption operations
+     * disableEncryption: false // Performs encryption operations as configured
+     */
+    disableEncryption?: Boolean;
+
+    /**
      * auth?: {
      *   linkedIn?: ILinkedInAuthConfig;
      *   google?: IGoogleAuthConfig;

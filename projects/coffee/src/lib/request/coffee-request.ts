@@ -1,6 +1,5 @@
 import { inject } from "@angular/core";
-import { HttpClient, HttpHeaders } from "@angular/common/http";
-import { Observable } from "rxjs";
+import { HttpClient} from "@angular/common/http";
 import { CONFIG, IConfig } from "../coffee-config";
 import { CoffeeQueryFilter } from "./coffee-query-filter";
 import { CoffeeRequestGet } from "./coffee-request-get";
@@ -8,7 +7,6 @@ import { CoffeeUtil } from "../shared/coffee-util";
 import { CoffeeEncryptService } from "../services/coffee-encrypt.service";
 import { CoffeeRquestSave } from "./coffee-request-save";
 import { CoffeeRequestPostPut } from "./coffee-request-post-put";
-import { map } from 'rxjs/operators';
 import { CoffeeRequestDelete } from "./coffee-request-delete";
 import { CoffeeRequestDownload } from "./coffee-request-download";
 
@@ -49,7 +47,7 @@ export class CoffeeRequest {
    */
   save<T>(endpoint: string, vo: any, isFormData = false): CoffeeRquestSave<T>{
     const url = CoffeeUtil.concatUrl(this.baseEndpoint, endpoint);
-    return new CoffeeRquestSave<T>(this.httpClient, this.encrypt, url, vo, isFormData);
+    return new CoffeeRquestSave<T>(this.httpClient, this.encrypt, url, vo, isFormData, this.config);
   }
 
   /**
@@ -60,7 +58,7 @@ export class CoffeeRequest {
    */
   create<T>(endpoint: string, vo: any, isFormData = false): CoffeeRequestPostPut<T | T[]> {
     const url = CoffeeUtil.concatUrl(this.baseEndpoint, endpoint);
-    return new CoffeeRequestPostPut<T | T[]>(this.httpClient, this.encrypt, url, vo, false, isFormData);
+    return new CoffeeRequestPostPut<T | T[]>(this.httpClient, this.encrypt, url, vo, false, isFormData, this.config);
   }
   
   /**
@@ -71,7 +69,7 @@ export class CoffeeRequest {
    */
   update<T>(endpoint: string, vo: any, isFormData = false): CoffeeRequestPostPut<T | T[]> {
     const url = CoffeeUtil.concatUrl(this.baseEndpoint, endpoint);
-    return new CoffeeRequestPostPut<T | T[]>(this.httpClient, this.encrypt, url, vo, true, isFormData);
+    return new CoffeeRequestPostPut<T | T[]>(this.httpClient, this.encrypt, url, vo, true, isFormData, this.config);
   }
 
   /**
