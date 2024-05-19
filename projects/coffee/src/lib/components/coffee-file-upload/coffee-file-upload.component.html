@@ -3,6 +3,9 @@
         [form]="form"
         [controlName]="controlName"
         [storageBucket]="storageBucket"
+        [autoUpload]="autoUpload"
+        [externalFile]="fileToUpload"
+        (fileSelected)="handleFileSelected($event)"
         (onChange)="onFileUploadChange($event)">
         <ng-container *ngTemplateOutlet="contentTpl"></ng-container>
     </app-single-file-upload>

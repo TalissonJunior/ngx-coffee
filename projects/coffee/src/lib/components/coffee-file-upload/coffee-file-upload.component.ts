@@ -17,8 +17,11 @@ export class CoffeeFileUploadComponent implements OnInit, AfterViewInit {
   @Input() form: FormGroup;
   @Input() controlName: string;
   @Input() storageBucket = 'default';
+  @Input() autoUpload: boolean = true;
+  @Input() fileToUpload: File;
   @Output() onNewFileUploaded = new Subject<any>();
   @Output() hasFilesInProgress = new EventEmitter<boolean>();
+  @Output() fileSelected = new EventEmitter<File>();
 
   @ViewChildren(SingleFileUploadComponent) private fileUploadComponents: QueryList<SingleFileUploadComponent>;
   @ViewChildren(MultipleFileUploadComponent) private multipleFileUploadComponents: QueryList<MultipleFileUploadComponent>;
@@ -83,6 +86,10 @@ export class CoffeeFileUploadComponent implements OnInit, AfterViewInit {
     else {
       this.hasFilesInProgress.next(this.file.progress > 0 && this.file.progress < 100);
     }
+  }
+
+  handleFileSelected(file: File) {
+    this.fileSelected.emit(file);
   }
 
 }

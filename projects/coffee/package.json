@@ -1,6 +1,6 @@
 {
   "name": "ngx-coffee",
-  "version": "1.2.22",
+  "version": "1.2.23",
   "peerDependencies": {
     "@angular/common": "^15.2.0",
     "@angular/core": "^15.2.0",

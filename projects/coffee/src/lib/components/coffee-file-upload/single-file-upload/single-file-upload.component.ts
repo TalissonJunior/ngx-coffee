@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnDestroy, Output, TemplateRef, ViewChild, AfterViewInit} from '@angular/core';
+import { Component, ElementRef, Input, OnDestroy, Output, TemplateRef, ViewChild, AfterViewInit, EventEmitter} from '@angular/core';
 import { AbstractControl} from '@angular/forms';
 import { CoffeeService } from '../../../coffee.service';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
@@ -11,6 +11,7 @@ import { CoffeeFileUpload } from '../models/file-upload';
 })
 export class SingleFileUploadComponent implements AfterViewInit, OnDestroy {
   private uploadSubscription: Subscription;
+
   public previewFile: CoffeeFileUpload | null = null;
   public uploadFailed: boolean = false;
   public uploadedFile:  CoffeeFileUpload | null = null;
@@ -21,10 +22,18 @@ export class SingleFileUploadComponent implements AfterViewInit, OnDestroy {
   @Input() uploadErrorMessage = 'Upload failed, please try again.';
   @Input() storageBucket = 'default';
   @Input() customTemplate?: TemplateRef<any>;
+  @Input() autoUpload: boolean = true;
+  @Input() set externalFile(file: File) {
+    if (file) {
+        this.onNewFile(file);
+    }
+  }
+
   @Output() progressEmitter = new BehaviorSubject<number>(0);
   @Output() onRemove = new Subject<CoffeeFileUpload>();
   @Output() onChange = new Subject<CoffeeFileUpload | null>();
   @Output() onNewCoffeeFileUploaded = new Subject<CoffeeFileUpload>();
+  @Output() fileSelected = new EventEmitter<File>(); 
 
   @ViewChild('fileInput', { static: false }) fileInput: ElementRef<HTMLInputElement>;
 
@@ -81,7 +90,13 @@ export class SingleFileUploadComponent implements AfterViewInit, OnDestroy {
     const inputElement = event.target as HTMLInputElement;
     const files = inputElement.files;
     if (files && files.length > 0) {
-      this.onNewFile(files[0]);
+
+      this.fileSelected.emit(files[0]);
+
+      if(this.autoUpload) {
+        this.onNewFile(files[0]);
+      }
+    
     } else {
       this.progressEmitter.next(0);
     }
