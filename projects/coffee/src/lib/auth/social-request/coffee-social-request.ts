@@ -18,6 +18,48 @@ export class CoffeeSocialRequest {
     ) { }
 
     /**
+     * Initiates the Google sign-in process.
+     * 
+     * This method relies on the ngx-coffee-social-google-button component, which
+     * triggers the `onResponse` event upon receiving the user's authentication data.
+     * The method then processes this data to complete the sign-in flow.
+     * 
+     * @param {CoffeeAuthSocial} model - The user's authentication data received from Google.
+     * @returns {Observable<boolean>} - An observable that emits `true` if the sign-in process is successful,
+     *                                  or an error if the sign-in process fails.
+     * 
+     * @example
+     * // Example usage in a component
+     * onGoogleSignInResponse(response: CoffeeAuthSocial): void {
+     *     this.coffeeService.auth().social.signInWithGoogle(response).subscribe({
+     *         next: (success) => {
+     *             console.log('Google sign-in successful:', success);
+     *         },
+     *         error: (error) => {
+     *             console.error('Google sign-in failed:', error);
+     *         }
+     *     });
+     * }
+     * 
+     * @see {@link CoffeeSocialGoogleButtonComponent} for the component that triggers this method.
+     */
+    signInWithGoogle(model: CoffeeAuthSocial): Observable<boolean>  {
+        return new Observable((observer) => {
+            this._signInWithSocialMedia('Google', model)
+            .subscribe({
+                next: () => {
+                    observer.next(true);
+                    observer.complete();
+                },
+                error: (error) => {
+                    observer.error(error);
+                    observer.complete();
+                }
+            });
+        });
+    }
+
+    /**
      * Initiates the Microsoft sign-in process using the MSAL service. This method
      * handles the entire flow of authenticating with Microsoft, including opening
      * a popup for user consent, retrieving the user profile, and handling any errors
@@ -45,7 +87,7 @@ export class CoffeeSocialRequest {
                     observer.error(error);
                     observer.complete();
                 }
-            })
+            });
         });
     }
 
@@ -66,7 +108,11 @@ export class CoffeeSocialRequest {
      */
     signInWithLinkedIn(): Observable<boolean> {
         if(!this.config?.auth?.linkedIn) {
-            throw Error('LinkedIn Authentication Configuration Missing: Ensure that the "auth" configuration property is provided when utilizing "CoffeeModule.forRoot({})" and that it includes "linkedIn" authentication settings.');
+            throw Error(
+                'LinkedIn Authentication Configuration Missing: Ensure that the "auth"' +
+                ' configuration property is provided when utilizing "CoffeeModule.forRoot({})"'+
+                ' and that it includes "linkedIn" authentication settings.'
+            );
         }
 
         let url = `${this.linkedInAuthApiUrl}?`;

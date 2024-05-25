@@ -1,3 +1,11 @@
+## [1.3.1] - 2024-05-25
+
+### Added
+- Introduced the `signInWithGoogle` method in the `CoffeeSocialRequest` class to handle Google sign-in functionality.
+
+### Changed
+- Enhanced `coffee-social-google-button.component.ts` to utilize the `onResponse` event, enabling seamless integration with the `signInWithGoogle` method.
+
 ## [1.3.0] - 2024-05-25
 
 ### Added

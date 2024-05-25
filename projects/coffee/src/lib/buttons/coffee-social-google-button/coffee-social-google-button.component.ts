@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, Renderer2, inject } from '@angular/core';
 import { CONFIG, IConfig } from '../../coffee-config';
-import { CoffeeService } from '../../coffee.service';
+import { CoffeeAuthSocial } from '../../auth/models/coffee-auth-social';
 
 declare var google: any;
 
@@ -22,14 +22,11 @@ export class CoffeeSocialGoogleButtonComponent implements AfterViewInit {
   @Input() logoAlignment: 'left' | 'center' = 'left';
   @Input() width = 400;
 
-  @Output() signInSuccess = new EventEmitter<any>();
-  @Output() signInError = new EventEmitter<string>();
-  @Output() loadingChange = new EventEmitter<boolean>(); 
+  @Output() onResponse = new EventEmitter<CoffeeAuthSocial>();
 
   constructor(
     private renderer: Renderer2,
-    private elementRef: ElementRef,
-    private coffeeService: CoffeeService
+    private elementRef: ElementRef
   ) {}
 
   ngAfterViewInit(): void {
@@ -74,7 +71,6 @@ export class CoffeeSocialGoogleButtonComponent implements AfterViewInit {
   }
 
   private handleGoogleSignIn(response: { credential: string }): void {
-    // This next is for decoding the idToken to an object if you want to see the details.
     let base64Url = response.credential.split('.')[1];
     let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     let jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
@@ -82,28 +78,14 @@ export class CoffeeSocialGoogleButtonComponent implements AfterViewInit {
     }).join(''));
 
     let userData = JSON.parse(jsonPayload);
+
+    const model = {
+      id: userData.sub,
+      name: userData.name,
+      email: userData.email,
+      photoUrl: userData.picture
+    } as CoffeeAuthSocial;
      
-    this.emitLoading(true); 
-
-    this.coffeeService.save(`user/socialmedia/Google`, {
-      'name': userData.name,
-      'email': userData.email,
-      'photoUrl': userData.picture,
-      'id': userData.sub
-    }, true)
-    .subscribe({
-      next: (data) => {
-        this.emitLoading(false);
-        this.signInSuccess.emit(data);
-      },
-      error: (error) => {
-        this.emitLoading(false);
-        this.signInError.emit(`Failed to save user data: ${error}`);
-      }
-    });
-  }
-
-  private emitLoading(isLoading: boolean): void {
-    this.loadingChange.emit(isLoading);
+    this.onResponse.emit(model); 
   }
 }
