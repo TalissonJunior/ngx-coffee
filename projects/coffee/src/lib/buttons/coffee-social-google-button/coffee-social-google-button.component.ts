@@ -1,13 +1,13 @@
-import { AfterViewInit, Component, ElementRef, Input, Renderer2, inject } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, Renderer2, inject } from '@angular/core';
 import { CONFIG, IConfig } from '../../coffee-config';
+import { CoffeeService } from '../../coffee.service';
 
 declare var google: any;
 
 // [https://developers.google.com/identity/gsi/web/reference/html-reference#element_with_class_g_id_signin]
 @Component({
-  selector: 'coffee-social-google-button',
+  selector: 'ngx-coffee-social-google-button',
   templateUrl: './coffee-social-google-button.component.html',
-  styleUrls: ['./coffee-social-google-button.component.css']
 })
 export class CoffeeSocialGoogleButtonComponent implements AfterViewInit {
   private config = inject<IConfig>(CONFIG);
@@ -22,9 +22,14 @@ export class CoffeeSocialGoogleButtonComponent implements AfterViewInit {
   @Input() logoAlignment: 'left' | 'center' = 'left';
   @Input() width = 400;
 
+  @Output() signInSuccess = new EventEmitter<any>();
+  @Output() signInError = new EventEmitter<string>();
+  @Output() loadingChange = new EventEmitter<boolean>(); 
+
   constructor(
     private renderer: Renderer2,
-    private elementRef: ElementRef
+    private elementRef: ElementRef,
+    private coffeeService: CoffeeService
   ) {}
 
   ngAfterViewInit(): void {
@@ -76,6 +81,29 @@ export class CoffeeSocialGoogleButtonComponent implements AfterViewInit {
       return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
     }).join(''));
 
-    console.log(JSON.parse(jsonPayload));
+    let userData = JSON.parse(jsonPayload);
+     
+    this.emitLoading(true); 
+
+    this.coffeeService.save(`user/socialmedia/Google`, {
+      'name': userData.name,
+      'email': userData.email,
+      'photoUrl': userData.picture,
+      'id': userData.sub
+    }, true)
+    .subscribe({
+      next: (data) => {
+        this.emitLoading(false);
+        this.signInSuccess.emit(data);
+      },
+      error: (error) => {
+        this.emitLoading(false);
+        this.signInError.emit(`Failed to save user data: ${error}`);
+      }
+    });
+  }
+
+  private emitLoading(isLoading: boolean): void {
+    this.loadingChange.emit(isLoading);
   }
 }

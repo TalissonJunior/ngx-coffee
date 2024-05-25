@@ -10,6 +10,17 @@ import { MsalService } from '@azure/msal-angular';
 import { Location } from '@angular/common';
 import { CoffeeEncryptService } from './services/coffee-encrypt.service';
 import { lastValueFrom } from 'rxjs';
+import { GoogleLoginProvider } from '@abacritt/angularx-social-login';
+
+const googleFactoryConfig = (config: IConfig) => {
+  return {
+    autoLogin: false,
+    providers: [{
+      id: GoogleLoginProvider.PROVIDER_ID,
+      provider: new GoogleLoginProvider(config.auth?.google?.clientId ?? '')
+    }]
+  };
+}
 
 const microsoftFactoryConfig = (config: IConfig) => {
   return new PublicClientApplication({
@@ -28,12 +39,6 @@ export function initializeMsal(msalService: MsalService): () => Promise<void> {
 }
 
 @NgModule({
-  /*declarations: [
-    CoffeeSocialGoogleButtonComponent
-  ],
-  exports: [
-    CoffeeSocialGoogleButtonComponent
-  ],*/
   imports: [
     HttpClientModule, 
   ]
@@ -77,6 +82,12 @@ export class CoffeeModule {
         {
           provide: PublicClientApplication,
           useFactory: microsoftFactoryConfig,
+          deps: [CONFIG]
+        },
+        // GOOGLE SETUP
+        {
+          provide: 'SocialAuthServiceConfig',
+          useFactory: googleFactoryConfig,
           deps: [CONFIG]
         }
       ]
