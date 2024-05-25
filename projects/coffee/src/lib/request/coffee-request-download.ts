@@ -1,8 +1,6 @@
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { map } from "rxjs/operators";
-import {
-    CoffeeQueryFilter, withQueryParameter
-} from ".";
+import { CoffeeQueryFilter, withQueryParameter } from ".";
 import { Observable } from "rxjs";
 import { CoffeeUtil } from "../shared/coffee-util";
 
@@ -60,7 +58,6 @@ export class CoffeeRequestDownload<T> {
         return this.downloadFile('PUT', fileNameWithExtension, useJsonContentType);
     }
 
-
     /**
      * Downloads a file from the server and saves it with the given file name.
      *
@@ -82,7 +79,7 @@ export class CoffeeRequestDownload<T> {
     *
     * @param method - The HTTP method to use ('PUT' or 'POST').
     * @param fileNameWithExtension - The desired file name, including the file extension (e.g., 'file.xlsx').
-    *@param useJsonContentType - Determines if 'application/json' should be used as the Content-Type.
+    * @param useJsonContentType - Determines if 'application/json' should be used as the Content-Type.
     * @returns An Observable that completes when the file has been downloaded.
     *
     * Usage example:
@@ -125,8 +122,11 @@ export class CoffeeRequestDownload<T> {
             headers = headers.set('Authorization', this.authorizationToken);
         }
 
-        const contentType = useJsonContentType ? 'application/json' : 'application/octet-stream';
-        headers = headers.set('Content-Type', contentType);
+        if (!this.isFormData) {
+            const contentType = useJsonContentType ? 'application/json' : 'application/octet-stream';
+            headers = headers.set('Content-Type', contentType);
+        }
+        // If isFormData is true, do not set the Content-Type header. Let the browser set it to multipart/form-data with the correct boundary.
 
         return headers;
     }
