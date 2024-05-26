@@ -1,3 +1,12 @@
+## [1.3.5] - 2024-05-25
+
+### Added
+- Introduced the `whereDate` method to handle date filtering by various components such as day, month, year, and combinations thereof.
+
+### Changed
+- Updated `CoffeeQueryFilter` interface to support the new filtering mechanism.
+- Simplified date filtering by removing other date filter methods and consolidating the functionality into `whereDate`.
+
 ## [1.3.1] - 2024-05-25
 
 ### Added

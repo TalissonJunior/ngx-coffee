@@ -143,137 +143,125 @@ export const whereNotIn = (
 
 /**
  * @summary
- * Search date by 'day'
- * @example 
- * .whereDay('createdAt', new Date())
- * .whereDay((model) => model.createdAt, new Date())
+ * Filter by date with various options for filtering by day, month, year, or combinations.
+ * 
+ * @param type The property name or a lambda function to specify the property.
+ * @param operator The comparison operator to use ('==', '!=', '<=', '<', '>=', '>').
+ * @param date The date value to compare.
+ * @param filterBy Specifies the components of the date to filter by ('day', 'month', 'year', 'day-month', 'day-year', 'month-year', 'day-month-year', 'full-date').
+ * 
+ * @example
+ * // Filter by day
+ * whereDate('createdAt', '==', new Date(), 'day');
+ * whereDate((model) => model.createdAt, '==', new Date(), 'day');
+ * 
+ * @example
+ * // Filter by month
+ * whereDate('createdAt', '==', new Date(), 'month');
+ * whereDate((model) => model.createdAt, '==', new Date(), 'month');
+ * 
+ * @example
+ * // Filter by year
+ * whereDate('createdAt', '==', new Date(), 'year');
+ * whereDate((model) => model.createdAt, '==', new Date(), 'year');
+ * 
+ * @example
+ * // Filter by day and month
+ * whereDate('createdAt', '==', new Date(), 'day-month');
+ * whereDate((model) => model.createdAt, '==', new Date(), 'day-month');
+ * 
+ * @example
+ * // Filter by day and year
+ * whereDate('createdAt', '==', new Date(), 'day-year');
+ * whereDate((model) => model.createdAt, '==', new Date(), 'day-year');
+ * 
+ * @example
+ * // Filter by month and year
+ * whereDate('createdAt', '==', new Date(), 'month-year');
+ * whereDate((model) => model.createdAt, '==', new Date(), 'month-year');
+ * 
+ * @example
+ * // Filter by day, month, and year
+ * whereDate('createdAt', '==', new Date(), 'day-month-year');
+ * whereDate((model) => model.createdAt, '==', new Date(), 'day-month-year');
+ * 
+ * @example
+ * // Filter by full date, (YYYY-MM-DD HH:mm:ss)
+ * whereDate('createdAt', '==', new Date());
+ * whereDate((model) => model.createdAt, '==', new Date());
  */
-export const whereDay = (
+export const whereDate = (
     type: ((model: any) => any) | string, 
-    value: Date
+    operator: '==' | '!=' | '<=' | '<' | '>=' | '>', 
+    date: Date, 
+    filterBy: 'day' | 'month' | 'year' | 'day-month' | 'day-year' | 'month-year' | 'day-month-year' | 'full-date' = 'full-date'
 ): CoffeeQueryFilter => {
     const propertyName = getPropertyName(type);
 
-    // Format the day to always be two digits
-    const day = value.getDate();
-    const formattedDay = day < 10 ? `0${day}` : day.toString();
+    // Format the date components
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear().toString();
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const seconds = date.getSeconds().toString().padStart(2, '0');
+    const fullDate = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+
+    // Add operator prefix
+    let operatorPrefix = '';
+    switch (operator) {
+        case '==':
+            operatorPrefix = 'cEqualDate';
+            break;
+        case '!=':
+            operatorPrefix = 'cNotEqualDate';
+            break;
+        case '<=':
+            operatorPrefix = 'cLessEqualDate';
+            break;
+        case '<':
+            operatorPrefix = 'cLessDate';
+            break;
+        case '>=':
+            operatorPrefix = 'cGreaterEqualDate';
+            break;
+        case '>':
+            operatorPrefix = 'cGreaterDate';
+            break;
+    }
+
+    let expression = '';
+    switch (filterBy) {
+        case 'day':
+            expression = `${operatorPrefix}${propertyName}=day=${day}`;
+            break;
+        case 'month':
+            expression = `${operatorPrefix}${propertyName}=month=${month}`;
+            break;
+        case 'year':
+            expression = `${operatorPrefix}${propertyName}=year=${year}`;
+            break;
+        case 'day-month':
+            expression = `${operatorPrefix}${propertyName}=day=${day},${operatorPrefix}${propertyName}=month=${month}`;
+            break;
+        case 'day-year':
+            expression = `${operatorPrefix}${propertyName}=day=${day},${operatorPrefix}${propertyName}=year=${year}`;
+            break;
+        case 'month-year':
+            expression = `${operatorPrefix}${propertyName}=month=${month},${operatorPrefix}${propertyName}=year=${year}`;
+            break;
+        case 'day-month-year':
+            expression = `${operatorPrefix}${propertyName}=day=${day},${operatorPrefix}${propertyName}=month=${month},${operatorPrefix}${propertyName}=year=${year}`;
+            break;
+        case 'full-date':
+            expression = `${operatorPrefix}${propertyName}=full-date=${fullDate}`;
+            break;
+    }
 
     return {
-        expression: `${propertyName}=day=${formattedDay}`,
+        expression: expression,
         type: 'filter'
-    }
-}
-
-/**
- * @summary
- * Search date by 'month'
- * @example 
- * .whereMonth('createdAt', new Date())
- * .whereMonth((model) => model.createdAt, new Date())
- */
-export const whereMonth = (
-    type: ((model: any) => any) | string, 
-    value: Date
-): CoffeeQueryFilter => {
-    const propertyName = getPropertyName(type);
-
-    // Adjust the month to be 1-based and format it to always be a number
-    const month = value.getMonth() + 1; // getMonth() is zero-based, add 1 to make it 1-based
-
-    return {
-        expression: `${propertyName}=month=${month}`,
-        type: 'filter'
-    }
-}
-
-/**
- * @summary
- * Search date by 'year'
- * @example 
- * .whereYear('createdAt', new Date())
- * .whereYear((model) => model.createdAt, new Date())
- */
-export const whereYear = (
-    type: ((model: any) => any) | string, 
-    value: Date
-): CoffeeQueryFilter => {
-    const propertyName = getPropertyName(type);
-
-    // Use getFullYear to obtain the year from the Date object
-    const year = value.getFullYear();
-
-    return {
-        expression: `${propertyName}=year=${year}`,
-        type: 'filter'
-    }
-}
-
-/**
- * @summary
- * Search date by 'day' and 'month'
- * @example 
- * .whereYear('createdAt', new Date())
- * .whereYear((model) => model.createdAt, new Date())
- */
-export const whereDayAndMonth = (
-    type: ((model: any) => any) | string, 
-    value: Date
-): CoffeeQueryFilter => {
-    return {
-        expression:`${whereDay(type, value).expression},${whereMonth(type, value).expression}`,
-        type: 'filter'
-    }
-}
-
-/**
- * @summary
- * Search date by 'day' and 'year'
- * @example 
- * .whereYear('createdAt', new Date())
- * .whereYear((model) => model.createdAt, new Date())
- */
-export const whereDayAndYear = (
-    type: ((model: any) => any) | string, 
-    value: Date
-): CoffeeQueryFilter => {
-    return {
-        expression:`${whereDay(type, value).expression},${whereYear(type, value).expression}`,
-        type: 'filter'
-    }
-}
-
-/**
- * @summary
- * Search date by 'month' and 'year'
- * @example 
- * .whereYear('createdAt', new Date())
- * .whereYear((model) => model.createdAt, new Date())
- */
-export const whereMonthAndYear = (
-    type: ((model: any) => any) | string, 
-    value: Date
-): CoffeeQueryFilter => {
-    return {
-        expression:`${whereMonth(type, value).expression},${whereYear(type, value).expression}`,
-        type: 'filter'
-    }
-}
-
-/**
- * @summary
- * Search date by 'day', 'month' and 'year'
- * @example 
- * .whereYear('createdAt', new Date())
- * .whereYear((model) => model.createdAt, new Date())
- */
-export const whereDayAndMonthAndYear = (
-    type: ((model: any) => any) | string, 
-    value: Date
-): CoffeeQueryFilter => {
-    return {
-        expression:`${whereDay(type, value).expression},${whereMonth(type, value).expression},${whereYear(type, value).expression}`,
-        type: 'filter'
-    }
+    };
 }
 
 /**

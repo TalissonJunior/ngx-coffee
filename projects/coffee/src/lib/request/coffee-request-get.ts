@@ -2,9 +2,7 @@ import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { map } from "rxjs/operators";
 import { 
   CoffeeQueryFilter, sortBy, where, 
-  whereContains, whereDay, whereMonth, whereYear,
-  whereDayAndMonth, whereDayAndYear, whereMonthAndYear, 
-  whereDayAndMonthAndYear, whereIn, 
+  whereContains, whereDate, whereIn, 
   whereNotIn, whereOr, withQueryParameter,
   Pager, FilterResponse, whereIs
 } from ".";
@@ -115,106 +113,60 @@ export class CoffeeRequestGet<T> {
 
   /**
    * @summary
-   * Search date by 'day'
-   * @example 
-   * .whereDay('createdAt', new Date())
-   * .whereDay((model) => model.createdAt, new Date())
+   * Filter by date with various options for filtering by day, month, year, or combinations.
+   * 
+   * @param type The property name or a lambda function to specify the property.
+   * @param operator The comparison operator to use ('==', '!=', '<=', '<', '>=', '>').
+   * @param date The date value to compare.
+   * @param filterBy Specifies the components of the date to filter by ('day', 'month', 'year', 'day-month', 'day-year', 'month-year', 'day-month-year', 'full-date').
+   * 
+   * @example
+   * // Filter by day
+   * whereDate('createdAt', '==', new Date(), 'day');
+   * whereDate((model) => model.createdAt, '==', new Date(), 'day');
+   * 
+   * @example
+   * // Filter by month
+   * whereDate('createdAt', '==', new Date(), 'month');
+   * whereDate((model) => model.createdAt, '==', new Date(), 'month');
+   * 
+   * @example
+   * // Filter by year
+   * whereDate('createdAt', '==', new Date(), 'year');
+   * whereDate((model) => model.createdAt, '==', new Date(), 'year');
+   * 
+   * @example
+   * // Filter by day and month
+   * whereDate('createdAt', '==', new Date(), 'day-month');
+   * whereDate((model) => model.createdAt, '==', new Date(), 'day-month');
+   * 
+   * @example
+   * // Filter by day and year
+   * whereDate('createdAt', '==', new Date(), 'day-year');
+   * whereDate((model) => model.createdAt, '==', new Date(), 'day-year');
+   * 
+   * @example
+   * // Filter by month and year
+   * whereDate('createdAt', '==', new Date(), 'month-year');
+   * whereDate((model) => model.createdAt, '==', new Date(), 'month-year');
+   * 
+   * @example
+   * // Filter by day, month, and year
+   * whereDate('createdAt', '==', new Date(), 'day-month-year');
+   * whereDate((model) => model.createdAt, '==', new Date(), 'day-month-year');
+   * 
+   * @example
+   * // Filter by full date, (YYYY-MM-DD HH:mm:ss)
+   * whereDate('createdAt', '==', new Date());
+   * whereDate((model) => model.createdAt, '==', new Date());
    */
-  whereDay = (
+  whereDate(
     type: ((model: any) => any) | string, 
-    value: Date
-  ) => {
-    this.queryParameters.push(whereDay(type, value));
-    return this;
-  }
-
-  /**
-  * @summary
-  * Search date by 'month'
-  * @example 
-  * .whereMonth('createdAt', new Date())
-  * .whereMonth((model) => model.createdAt, new Date())
-  */
-  whereMonth = (
-    type: ((model: any) => any) | string, 
-    value: Date
-  ) => {
-    this.queryParameters.push(whereMonth(type, value));
-    return this;
-  }
-
-  /**
-  * @summary
-  * Search date by 'year'
-  * @example 
-  * .whereYear('createdAt', new Date())
-  * .whereYear((model) => model.createdAt, new Date())
-  */
-  whereYear = (
-    type: ((model: any) => any) | string, 
-    value: Date
-  ) => {
-    this.queryParameters.push(whereYear(type, value));
-    return this;
-  }
-
-  /**
-  * @summary
-  * Search date by 'day' and 'month'
-  * @example 
-  * .whereYear('createdAt', new Date())
-  * .whereYear((model) => model.createdAt, new Date())
-  */
-  whereDayAndMonth = (
-    type: ((model: any) => any) | string, 
-    value: Date
-  ) => {
-    this.queryParameters.push(whereDayAndMonth(type, value));
-    return this;
-  }
-
-  /**
-  * @summary
-  * Search date by 'day' and 'year'
-  * @example 
-  * .whereYear('createdAt', new Date())
-  * .whereYear((model) => model.createdAt, new Date())
-  */
-  whereDayAndYear = (
-    type: ((model: any) => any) | string, 
-    value: Date
-  ) => {
-    this.queryParameters.push(whereDayAndYear(type, value));
-    return this;
-  }
-
-  /**
-  * @summary
-  * Search date by 'month' and 'year'
-  * @example 
-  * .whereYear('createdAt', new Date())
-  * .whereYear((model) => model.createdAt, new Date())
-  */
-  whereMonthAndYear = (
-    type: ((model: any) => any) | string, 
-    value: Date
-  ) => {
-    this.queryParameters.push(whereMonthAndYear(type, value));
-    return this;
-  }
-
-  /**
-  * @summary
-  * Search date by 'day', 'month' and 'year'
-  * @example 
-  * .whereYear('createdAt', new Date())
-  * .whereYear((model) => model.createdAt, new Date())
-  */
-  whereDayAndMonthAndYear = (
-    type: ((model: any) => any) | string, 
-    value: Date
-  ) => {
-    this.queryParameters.push(whereDayAndMonthAndYear(type, value));
+    operator: '==' | '!=' | '<=' | '<' | '>=' | '>', 
+    date: Date, 
+    filterBy: 'day' | 'month' | 'year' | 'day-month' | 'day-year' | 'month-year' | 'day-month-year' | 'full-date' = 'full-date'
+  ) {
+    this.queryParameters.push(whereDate(type, operator, date, filterBy));
     return this;
   }
 
