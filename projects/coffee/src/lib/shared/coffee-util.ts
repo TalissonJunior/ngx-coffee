@@ -53,4 +53,9 @@ export namespace CoffeeUtil {
     }
     return formData;
   }
+
+  export const formatCoffeeLogMessage = (content: string): string => {
+    const logHeader = '### 📒 COFFEE LOG ###';
+    return `${logHeader}\n${content}\n${logHeader}`;
+  }
 }

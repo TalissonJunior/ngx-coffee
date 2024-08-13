@@ -1,3 +1,11 @@
+## [1.4.0] - 2024-08-13
+
+### Added
+- Introduced the `(onError)` event in the `ngx-coffee-file-upload` component, enabling developers to handle file upload errors more effectively. This event emits detailed error messages, and if utilized, prevents errors from being logged to the console.
+
+### Changed
+- Enhanced error messaging in `ngx-coffee-file-upload` to include suggestions for handling errors using the `(onError)` event, ensuring better communication and flexibility for developers.
+
 ## [1.3.5] - 2024-05-25
 
 ### Added

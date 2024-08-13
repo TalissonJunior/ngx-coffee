@@ -4,6 +4,7 @@ import { CoffeeService } from '../../../coffee.service';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { CoffeeFileUploadContext } from '../models/file-upload-context';
 import { CoffeeFileUpload } from '../models/file-upload';
+import { CoffeeUtil } from '../../../shared/coffee-util';
 
 @Component({
   selector: 'app-single-file-upload',
@@ -21,6 +22,7 @@ export class SingleFileUploadComponent implements AfterViewInit, OnDestroy {
   @Input() controlName: string;
   @Input() uploadErrorMessage = 'Upload failed, please try again.';
   @Input() storageBucket = 'default';
+  @Input() allowedType: 'images' | 'documents' | 'all' = 'all';
   @Input() customTemplate?: TemplateRef<any>;
   @Input() autoUpload: boolean = true;
   @Input() set externalFile(file: File) {
@@ -34,6 +36,7 @@ export class SingleFileUploadComponent implements AfterViewInit, OnDestroy {
   @Output() onChange = new Subject<CoffeeFileUpload | null>();
   @Output() onNewCoffeeFileUploaded = new Subject<CoffeeFileUpload>();
   @Output() fileSelected = new EventEmitter<File>(); 
+  @Output() onError = new EventEmitter<{ type: string, message: string }>(); 
 
   @ViewChild('fileInput', { static: false }) fileInput: ElementRef<HTMLInputElement>;
 
@@ -90,13 +93,45 @@ export class SingleFileUploadComponent implements AfterViewInit, OnDestroy {
     const inputElement = event.target as HTMLInputElement;
     const files = inputElement.files;
     if (files && files.length > 0) {
+      const file = files[0];
 
-      this.fileSelected.emit(files[0]);
+      const acceptedTypes = this.getAcceptedFileTypes().split(',');
+      const fileExtension = file.name.split('.').pop()?.toLowerCase();
+      const isAccepted = acceptedTypes.some(type => 
+        type.trim() === '*/*' || 
+        (type.includes('/') && file.type.startsWith(type.split('/')[0])) || 
+        (fileExtension && type.includes(`.${fileExtension}`))
+      );
 
-      if(this.autoUpload) {
-        this.onNewFile(files[0]);
+      if (isAccepted) {
+        this.fileSelected.emit(file);
+
+        if (this.autoUpload) {
+          this.onNewFile(file);
+        }
+      } else {
+        this.uploadFailed = true;
+        this.progressEmitter.next(0);
+        
+        // Custom log header and improved error message
+        const allowedTypes = this.getAcceptedFileTypes();
+        const selectedType = file.type || `.${fileExtension}`;
+        const fileName = file.name;
+        
+        const errorMsgContent = 
+        `Selected file '${fileName}' has a type '${selectedType}' which is not allowed.\n` +
+        `Allowed types are: ${allowedTypes}.\n\n` +
+        `To handle this error, use the (onError) event like the example below:\n\n` +
+        `<ngx-coffee-file-upload (onError)="yourMethod($event)">...</ngx-coffee-file-upload>\n\n` +
+        `This will emit the error and prevent it from being logged to the console.`;
+
+        const errorMsg = CoffeeUtil.formatCoffeeLogMessage(errorMsgContent);
+
+        this.onError.emit({
+          type: 'fileType',
+          message: errorMsg,
+        });
       }
-    
     } else {
       this.progressEmitter.next(0);
     }
@@ -110,6 +145,17 @@ export class SingleFileUploadComponent implements AfterViewInit, OnDestroy {
     this.uploadedFile = null;
     this.optimizationInfo = '';
     this.clearFileInput();
+  }
+
+  private getAcceptedFileTypes(): string {
+    switch (this.allowedType) {
+      case 'images':
+        return 'image/*';
+      case 'documents':
+        return 'application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      default:
+        return '*/*';
+    }
   }
   
   private showImageFullscreen(): void {

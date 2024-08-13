@@ -4,9 +4,11 @@
         [controlName]="controlName"
         [storageBucket]="storageBucket"
         [autoUpload]="autoUpload"
+        [allowedType]="allowedType"
         [externalFile]="fileToUpload"
         (fileSelected)="handleFileSelected($event)"
-        (onChange)="onFileUploadChange($event)">
+        (onChange)="onFileUploadChange($event)"
+        (onError)="handleError($event,true)">
         <ng-container *ngTemplateOutlet="contentTpl"></ng-container>
     </app-single-file-upload>
 </ng-container>
@@ -14,9 +16,11 @@
 <ng-container *ngIf="type == 'multiple'">
     <app-multiple-file-upload
         [form]="form"
+        [allowedType]="allowedType"
         [controlName]="controlName"
         [storageBucket]="storageBucket"
-        (onNewFileUploaded)="onFileUploadChange($event)">
+        (onNewFileUploaded)="onFileUploadChange($event)"
+        (onError)="handleError($event)">
         <ng-container *ngTemplateOutlet="contentTpl"></ng-container>
     </app-multiple-file-upload>
 </ng-container>

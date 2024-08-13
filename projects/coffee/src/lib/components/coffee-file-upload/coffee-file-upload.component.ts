@@ -18,10 +18,12 @@ export class CoffeeFileUploadComponent implements OnInit, AfterViewInit {
   @Input() controlName: string;
   @Input() storageBucket = 'default';
   @Input() autoUpload: boolean = true;
+  @Input() allowedType: 'images' | 'documents' | 'all' = 'all';
   @Input() fileToUpload: File;
   @Output() onNewFileUploaded = new Subject<any>();
   @Output() hasFilesInProgress = new EventEmitter<boolean>();
   @Output() fileSelected = new EventEmitter<File>();
+  @Output() onError = new EventEmitter<{ type: string, message: string }>(); 
 
   @ViewChildren(SingleFileUploadComponent) private fileUploadComponents: QueryList<SingleFileUploadComponent>;
   @ViewChildren(MultipleFileUploadComponent) private multipleFileUploadComponents: QueryList<MultipleFileUploadComponent>;
@@ -90,6 +92,14 @@ export class CoffeeFileUploadComponent implements OnInit, AfterViewInit {
 
   handleFileSelected(file: File) {
     this.fileSelected.emit(file);
+  }
+
+  handleError(event: { type: string, message: string },isSelf: boolean = false) {
+    if(this.onError.observed) {
+      this.onError.emit(event);
+    }else {
+      console.error(event.message);
+    }
   }
 
 }
