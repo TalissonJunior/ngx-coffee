@@ -99,14 +99,24 @@ Whether it's converting a profile picture to Base64 or preparing a menu PDF for 
 
 #### Step 1: Build for Production
 Begin by building the project with the production configuration.
+
 ```
-ng build --configuration=production
+ng build ngx-coffee --configuration=production
+```
+OR
+```
+ng build ngx-coffee-ssr --configuration=production
 ```
 
 #### Step 2: Navigate to the Build Output Directory
 
 ```
-cd dist/coffee
+cd dist/ngx-coffee
+```
+or
+
+```
+cd dist/ngx-coffee-ssr
 ```
 
 #### Step 3: Publish to npm

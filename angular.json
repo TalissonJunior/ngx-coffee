@@ -3,23 +3,23 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "coffee": {
+    "ngx-coffee": {
       "projectType": "library",
-      "root": "projects/coffee",
-      "sourceRoot": "projects/coffee/src",
+      "root": "projects/ngx-coffee",
+      "sourceRoot": "projects/ngx-coffee/src",
       "prefix": "lib",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:ng-packagr",
           "options": {
-            "project": "projects/coffee/ng-package.json"
+            "project": "projects/ngx-coffee/ng-package.json"
           },
           "configurations": {
             "production": {
-              "tsConfig": "projects/coffee/tsconfig.lib.prod.json"
+              "tsConfig": "projects/ngx-coffee/tsconfig.lib.prod.json"
             },
             "development": {
-              "tsConfig": "projects/coffee/tsconfig.lib.json"
+              "tsConfig": "projects/ngx-coffee/tsconfig.lib.json"
             }
           },
           "defaultConfiguration": "production"
@@ -27,7 +27,7 @@
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
-            "tsConfig": "projects/coffee/tsconfig.spec.json",
+            "tsConfig": "projects/ngx-coffee/tsconfig.spec.json",
             "polyfills": [
               "zone.js",
               "zone.js/testing"
