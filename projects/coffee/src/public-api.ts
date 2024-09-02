@@ -11,3 +11,4 @@ export * from './lib/models';
 // Components
 
 export * from './lib/components/coffee-file-upload';
+export * from './lib/components/svg-icon';

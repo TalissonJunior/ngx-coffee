@@ -16,36 +16,84 @@ export const CONFIG = new InjectionToken<IConfig>('coffee config');
 /**
  * ILinkedInAuthConfig interface provides a structure for configuring
  * LinkedIn authentication settings within the application.
- *
- * Properties:
- * - clientId: A string that represents the client ID obtained from
- *   LinkedIn Developer portal.
- * - scope: (Optional) A string defining the permissions the application
- *   is requesting from the user. Default is 'r_emailaddress,r_liteprofile'.
- * - redirectUrl: A string representing the URL to which the user will
- *   be redirected after successful authentication.
- * - openInPopup: (Optional) A boolean indicating whether LinkedIn
- *   authentication should be performed in a popup window. Default is undefined.
  */
 export interface ILinkedInAuthConfig {
+
+    /**
+     * A string that represents the client ID obtained from LinkedIn Developer portal.
+     */
     clientId: string;
+
+    /**
+     * A string defining the permissions the application is requesting from the user.
+     * Default is 'r_emailaddress,r_liteprofile'.
+     */
     scope?: string;
-    redirectUrl: string;
+
+    /**
+     * A string representing the URL to which the user will be redirected after successful authentication.
+     */
+    redirectUri: string;
+
+    /**
+     * A boolean indicating whether LinkedIn authentication should be performed in a popup window.
+     * Default is `undefined`.
+     */
     openInPopup?: boolean;
 }
 
 /**
  * IGoogleAuthConfig interface provides a structure for configuring
  * Google authentication settings within the application.
- *
- * Properties:
- * - clientId: A string that represents the client ID obtained from
- *   Google Developer Console. The client ID should end with
- *   ".apps.googleusercontent.com".
  */
 export interface IGoogleAuthConfig {
+    
+    /**
+     * A string that represents the client ID obtained from Google Developer Console.
+     * The client ID should end with ".apps.googleusercontent.com".
+     */
     clientId: string;
+
+    /**
+     * A string or array of strings representing the OAuth2 scopes requested during
+     * the authentication process. Default scopes include 'email' and 'profile'.
+     * Scopes should be split by comma, e.g., 'email,profile'.
+     */
+    scope?: string;
+
+    /**
+     * A boolean that indicates whether the Google authentication page should be
+     * opened in a popup window or as a full-page redirect. Defaults to `true`.
+     */
+    openInPopup?: boolean;
+
+    /**
+     * A string representing the URL where Google should redirect the user after
+     * authentication. This URL must match one of the authorized redirect URIs set in the Google Developer Console.
+     */
+    redirectUri: string;
+
+    /**
+     * A string that specifies the type of user consent screen to display.
+     * Common values include 'consent' (to prompt for re-consent) and 'select_account'
+     * (to prompt the user to select an account). Defaults to `undefined`.
+     */
+    prompt?: 'consent' | 'select_account';
+
+    /**
+     * A string that specifies whether your application needs to access Google services
+     * on behalf of the user when they are not actively using your application.
+     * Set to 'offline' to receive a refresh token. Defaults to `'offline'`.
+     */
+    accessType?: 'online' | 'offline';
+
+    /**
+     * A string that can be used to maintain state between the request and callback.
+     * This is useful for preventing CSRF attacks. Defaults to `undefined`.
+     */
+    state?: string;
 }
+
 
 export interface IMicrosoftAuthConfig {
     /**
@@ -283,7 +331,7 @@ export interface IConfig {
      * auth: {
      *   linkedIn: {
      *     clientId: 'YOUR_LINKEDIN_CLIENT_ID',
-     *     redirectUrl: 'YOUR_LINKEDIN_REDIRECT_URI',
+     *     redirectUri: 'YOUR_LINKEDIN_REDIRECT_URI',
      *     // other LinkedIn auth config properties...
      *   },
      *   // similarly for google and microsoft...

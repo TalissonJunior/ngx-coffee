@@ -6,6 +6,7 @@
     "@angular/core": "^15.2.0",
     "@azure/msal-angular": "^3.0.5",
     "@azure/msal-browser": "^3.2.0",
+    "googleapis": "^140.0.1",
     "jsencrypt": "^3.3.2",
     "rxjs": "~7.8.0",
     "crypto-js": "^4.2.0"

@@ -1,28 +1,38 @@
 import { CONFIG, IConfig } from '../coffee-config';
 import { HttpClient } from '@angular/common/http';
-import { Injectable, Inject } from '@angular/core';
-import JSEncrypt from 'jsencrypt';
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import * as CryptoJS from 'crypto-js';
+import { isPlatformBrowser } from '@angular/common';
+import { CoffeeUtil } from '../shared/coffee-util';
 
 @Injectable()
 export class CoffeeEncryptService {
   private publicKey: string;
+  private isBrowser: boolean;
 
   constructor(
     private http: HttpClient,
-    @Inject(CONFIG) private config: IConfig
-  ) {}
+    @Inject(CONFIG) private config: IConfig,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+  }
   
   async encrypt<Z>(data: Z): Promise<Z | { k: string, d: string } | false> {
+    if (!this.isBrowser) {
+      CoffeeUtil.formatCoffeeLogMessage('Encryption is only available in the browser environment.');
+      return false;
+    }
+
     await this.fetchKey();
 
     if (!this.publicKey) {
       return false;
     }
 
-    const aesKey = CryptoJS.lib.WordArray.random(128/8).toString(CryptoJS.enc.Hex);
-    const aesIV = CryptoJS.lib.WordArray.random(128/8).toString(CryptoJS.enc.Hex);
+    const aesKey = CryptoJS.lib.WordArray.random(128 / 8).toString(CryptoJS.enc.Hex);
+    const aesIV = CryptoJS.lib.WordArray.random(128 / 8).toString(CryptoJS.enc.Hex);
 
     const encryptedData = CryptoJS.AES.encrypt(JSON.stringify(data), CryptoJS.enc.Hex.parse(aesKey), {
       iv: CryptoJS.enc.Hex.parse(aesIV),
@@ -40,9 +50,14 @@ export class CoffeeEncryptService {
   }
 
   private async encryptWithPublicKey(data: string): Promise<string | null> {
+    if (!this.isBrowser) {
+      CoffeeUtil.formatCoffeeLogMessage('Public key encryption is only available in the browser environment.');
+      return null;
+    }
+
     try {
       const enc = new TextEncoder();
-  
+
       // Convert PEM to ArrayBuffer
       const pemHeader = "-----BEGIN PUBLIC KEY-----";
       const pemFooter = "-----END PUBLIC KEY-----";
@@ -50,7 +65,7 @@ export class CoffeeEncryptService {
       pemContents = pemContents.replace(/\s/g, '');
       const binaryDerString = atob(pemContents);
       const binaryDer = this.str2ab(binaryDerString);
-  
+
       // Import the public key
       const cryptoKey = await window.crypto.subtle.importKey(
         'spki',
@@ -62,29 +77,29 @@ export class CoffeeEncryptService {
         true,
         ["encrypt"]
       );
-  
+
       // Encrypt the data
       const encryptedData = await window.crypto.subtle.encrypt(
-      {
-        name: "RSA-OAEP",
-        hash: { name: "SHA-256" }
-      } as RsaOaepParams, // Explicitly asserting the type
-      cryptoKey,
-      enc.encode(data)
-    );
+        {
+          name: "RSA-OAEP",
+          hash: { name: "SHA-256" }
+        } as RsaOaepParams, // Explicitly asserting the type
+        cryptoKey,
+        enc.encode(data)
+      );
 
-    // Convert Uint8Array to binary string
-    const binaryString = Array.from(new Uint8Array(encryptedData), byte =>
-      String.fromCharCode(byte)
-    ).join('');
+      // Convert Uint8Array to binary string
+      const binaryString = Array.from(new Uint8Array(encryptedData), byte =>
+        String.fromCharCode(byte)
+      ).join('');
 
-    return btoa(binaryString);
+      return btoa(binaryString);
     } catch (error) {
-      console.error('Encryption error:', error);
+      CoffeeUtil.formatCoffeeLogMessage('Encryption error:' + error);
       return null;
     }
   }
-  
+
   private str2ab(str: string): ArrayBuffer {
     const buf = new ArrayBuffer(str.length);
     const bufView = new Uint8Array(buf);
@@ -93,25 +108,24 @@ export class CoffeeEncryptService {
     }
     return buf;
   }
-  
+
   private async fetchKey(): Promise<void> {
     if (this.publicKey) {
       return;
     }
-  
+
     try {
       const options = { responseType: 'text' as 'text' } as any;
       const snapshot = await firstValueFrom(this.http.get<string>(
-          this.config.baseApiUrl + '/coffee/keys/public', options
-        )
-      );
+        this.config.baseApiUrl + '/coffee/keys/public', options
+      ));
       this.publicKey = snapshot as any;
     } catch (error) {
       if (this.config.disableEncryptErrorLogs || this.config.disableEncryption) {
         return;
       }
 
-      console.error(
+      CoffeeUtil.formatCoffeeLogMessage(
         "It appears that encryption has not been configured on the server. " +
         "To ensure your authentication data is securely transmitted, please verify the " +
         "encryption setup on the server side. If this issue persists, consult the server " +

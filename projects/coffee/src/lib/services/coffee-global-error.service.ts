@@ -1,6 +1,7 @@
+import { isPlatformBrowser } from '@angular/common';
 import { CONFIG, IConfig } from '../coffee-config';
 import { HttpClient } from '@angular/common/http';
-import { ErrorHandler, Injectable, Inject } from '@angular/core';
+import { ErrorHandler, Injectable, Inject, PLATFORM_ID } from '@angular/core';
 
 @Injectable()
 export class CoffeeGlobalErrorService implements ErrorHandler {
@@ -9,7 +10,8 @@ export class CoffeeGlobalErrorService implements ErrorHandler {
 
   constructor(
     private http: HttpClient,
-    @Inject(CONFIG) private config: IConfig
+    @Inject(CONFIG) private config: IConfig,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
   handleError(error: any): void {
@@ -29,7 +31,7 @@ export class CoffeeGlobalErrorService implements ErrorHandler {
   private logError(error: any, errorSignature: string): void {
     const message = error.message ? error.message : error.toString();
     const stack = error.stack ? error.stack : '';
-    const currentUrl = window.location.href;
+    const currentUrl = isPlatformBrowser(this.platformId) ? window.location.href : '';
     const timestamp = new Date().toISOString();
     const logLevel = 'error';
 

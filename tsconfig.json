@@ -6,6 +6,9 @@
     "paths": {
       "coffee": [
         "dist/coffee"
+      ],
+      "ngx-coffee-ssr": [
+        "dist/ngx-coffee-ssr"
       ]
     },
     "outDir": "./dist/out-tsc",

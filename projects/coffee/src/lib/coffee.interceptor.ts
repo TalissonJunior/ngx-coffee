@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import {
   HttpInterceptor,
   HttpRequest,
@@ -15,6 +15,7 @@ import { lastValueFrom, Observable, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { AuthUtils } from './auth/auth-utils';
 import { CONFIG, IConfig } from './coffee-config';
+import { PlatformService } from './services/platform.service';
 
 @Injectable()
 export class CoffeeInterceptor implements HttpInterceptor {
@@ -31,6 +32,11 @@ export class CoffeeInterceptor implements HttpInterceptor {
     | HttpUserEvent<any>
     | any
   > {
+    
+    if (!new PlatformService(PLATFORM_ID).isBrowser()) {
+      return next.handle(request);
+    }
+
     return next
       .handle(this.addTokenToRequest(request, AuthUtils.getToken() ?? '', this.config))
       .pipe(

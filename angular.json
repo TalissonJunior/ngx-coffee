@@ -35,6 +35,39 @@
           }
         }
       }
+    },
+    "ngx-coffee-ssr": {
+      "projectType": "library",
+      "root": "projects/ngx-coffee-ssr",
+      "sourceRoot": "projects/ngx-coffee-ssr/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "projects/ngx-coffee-ssr/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/ngx-coffee-ssr/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/ngx-coffee-ssr/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "tsConfig": "projects/ngx-coffee-ssr/tsconfig.spec.json",
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ]
+          }
+        }
+      }
     }
   },
   "cli": {

@@ -1,15 +1,17 @@
 import { HttpClient } from "@angular/common/http";
-import { map, Observable } from "rxjs";
+import { Observable } from "rxjs";
 import { IConfig } from "../../coffee-config";
 import { AuthUtils } from "../auth-utils";
 import { MsalService } from "@azure/msal-angular";
 import { CoffeeRequest } from "../../request/coffee-request";
 import { CoffeeAuthSocial } from "../models/coffee-auth-social";
+import { CoffeeUtil } from "../../shared/coffee-util";
 
 export class CoffeeSocialRequest {
     private linkedInAuthApiUrl = "https://www.linkedin.com/oauth/v2/authorization";
+    private googleAuthApiUrl = "https://accounts.google.com/o/oauth2/auth";
     private microsoftPhotoUrl = "https://graph.microsoft.com/v1.0/me/photo/$value";
-    
+
     constructor(
         private config: IConfig, 
         private httpClient: HttpClient,
@@ -17,63 +19,113 @@ export class CoffeeSocialRequest {
         private msalService: MsalService
     ) { }
 
+    // GOOGLE AUTH METHODS
+
     /**
-     * Initiates the Google sign-in process.
-     * 
-     * This method relies on the ngx-coffee-social-google-button component, which
-     * triggers the `onResponse` event upon receiving the user's authentication data.
-     * The method then processes this data to complete the sign-in flow.
-     * 
-     * @param {CoffeeAuthSocial} model - The user's authentication data received from Google.
-     * @returns {Observable<boolean>} - An observable that emits `true` if the sign-in process is successful,
-     *                                  or an error if the sign-in process fails.
-     * 
+     * Initiates the Google sign-in process by redirecting the user to the Google OAuth2 authorization page.
+     *
+     * After the user is redirected back to your application, make sure to call `validateGoogleRedirect()`
+     * to exchange the authorization code for an access token and complete the authentication process.
+     *
+     * @returns {Observable<boolean>} - An observable that emits `true` if the window is opened or user is redirected successfully.
+     *
      * @example
-     * // Example usage in a component
-     * onGoogleSignInResponse(response: CoffeeAuthSocial): void {
-     *     this.coffeeService.auth().social.signInWithGoogle(response).subscribe({
-     *         next: (success) => {
-     *             console.log('Google sign-in successful:', success);
-     *         },
-     *         error: (error) => {
-     *             console.error('Google sign-in failed:', error);
-     *         }
-     *     });
-     * }
+     * this.coffeeSocialRequest.signInWithGoogle().subscribe({
+     *     next: () => console.log('Google sign-in initiated:', success),
+     *     error: () => console.log('Google sign-in initiation failed:', error)
+     * });
      * 
-     * @see {@link CoffeeSocialGoogleButtonComponent} for the component that triggers this method.
+     * // After redirection, call the following in your redirect handling code:
+     * this.coffeeSocialRequest.validateGoogleRedirect().subscribe({
+     *     next: () => console.log('You are now authenticated:', success),
+     *     error: () => console.log('Token validation failed:', error)
+     * });
      */
-    signInWithGoogle(model: CoffeeAuthSocial): Observable<boolean>  {
+    signInWithGoogle(): Observable<boolean> {
+        if (!this.config?.auth?.google) {
+            throw Error(
+                CoffeeUtil.formatCoffeeLogMessage(
+                    'Google Authentication Configuration Missing: Ensure that the "auth"' +
+                    ' configuration property is provided when utilizing "CoffeeModule.forRoot({})"' +
+                    ' and that it includes "google" authentication settings.'
+                )
+            );
+        }
+
+        let url = `${this.googleAuthApiUrl}?`;
+        url += `response_type=code&`;
+        url += `client_id=${this.config.auth.google.clientId}&`;
+        url += `scope=${Array.isArray(this.config.auth.google.scope) ? this.config.auth.google.scope.join(' ') : (this.config.auth.google.scope ?? 'email profile')}&`;
+        url += `redirect_uri=${this.config.auth.google.redirectUri}&`;
+        url += `access_type=${this.config.auth.google.accessType ?? 'online'}&`;
+
+        if (this.config.auth.google.prompt) {
+            url += `prompt=${this.config.auth.google.prompt}&`;
+        }
+
+        if (this.config.auth.google.state) {
+            url += `state=${this.config.auth.google.state}&`;
+        }
+
         return new Observable((observer) => {
-            this._signInWithSocialMedia('Google', model)
-            .subscribe({
-                next: () => {
-                    observer.next(true);
-                    observer.complete();
-                },
-                error: (error) => {
-                    observer.error(error);
-                    observer.complete();
+            if (!this.config.auth?.google?.openInPopup) {
+                window.open(url, '_self');
+                observer.next(true);
+                observer.complete();
+                return;
+            }
+
+            const win = window.open(url, '_blank', `scrollbars=yes,resizable=yes,width=500,height=500`) as any;
+            const timer = setInterval(() => { 
+                if(win.closed) {
+                    const token = (win as any).googleToken;
+                    clearInterval(timer);
+
+                    if(token) {
+                        AuthUtils.saveToken(token);
+                        observer.next(true);
+                        observer.complete();
+                    }
+                    else {
+                        observer.error();
+                        observer.complete();
+                    }
                 }
-            });
+            }, 500);
         });
     }
 
     /**
-     * Initiates the Microsoft sign-in process using the MSAL service. This method
-     * handles the entire flow of authenticating with Microsoft, including opening
-     * a popup for user consent, retrieving the user profile, and handling any errors
-     * that might occur during the process.
+     * Validates the Google sign-in by exchanging the received `code` for an access token,
+     * then submitting the token to backend to handle the Google authentication process.
      *
-     * @returns {Observable<boolean>} - An observable that emits `true` if the sign-in process is successful.
+     * @returns {Observable<boolean>} - An observable that emits `true` if the authentication is successful.
+     *
+     * @example
+     * validateGoogleRedirect().subscribe({
+     *     next: () => console.log('You are now authenticated:', success),
+     *     error: () => console.log('Token validation failed:', error)
+     * });
      */
-    signInWithMicrosoft(): Observable<boolean>  {
+    validateGoogleRedirect(): Observable<boolean> {
         return new Observable((observer) => {
-            this._signInWithMicrosoft().subscribe({
-                next: (model) => {
-                    this._signInWithSocialMedia('Microsoft', model)
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            
+            if (code) {
+                const url = this.config?.baseApiUrl;
+                const body = { authorizationCode: code };
+
+                this.httpClient.post<string>(`${url}/coffee/auth/google`, body)
                     .subscribe({
-                        next: () => {
+                        next: (data: any) => {
+                            // Check if data is a string and parse it if necessary
+                            if (typeof data === 'string') {
+                                data = JSON.parse(data);
+                            }
+                            
+                            (window as any).googleToken = data.token;
+                            AuthUtils.saveToken(data.token);
                             observer.next(true);
                             observer.complete();
                         },
@@ -82,31 +134,36 @@ export class CoffeeSocialRequest {
                             observer.complete();
                         }
                     });
-                },
-                error: (error) => {
-                    observer.error(error);
-                    observer.complete();
-                }
-            });
+            } else {
+                observer.error('No Google authorization code found in the URL.');
+                observer.complete();
+            }
         });
     }
 
-    /**
-     * Initiates the LinkedIn sign-in process.
-     * Depending on the configuration, it either redirects the user to the LinkedIn authorization page
-     * or opens it in a new popup window.
+    // LINKEDIN AUTH METHODS
+
+     /**
+     * Initiates the LinkedIn sign-in process by redirecting the user to the LinkedIn OAuth2 authorization page.
+     *
+     * After the user is redirected back to your application, make sure to call `validateLinkedInRedirect()`
+     * to exchange the authorization code for an access token and complete the authentication process.
      *
      * @returns {Observable<boolean>} - An observable that emits `true` if the window is opened or user is redirected successfully.
-     * 
+     *
      * @example
-     * signInWithLinkedIn().subscribe(
-     *     success => console.log('Sign-in initiated:', success),
-     *     error => console.log('Sign-in initiation failed:', error)
-     * );
+     * this.coffeeSocialRequest.signInWithLinkedIn().subscribe({
+     *     next: () => console.log('LinkedIn sign-in initiated:', success),
+     *     error: () => console.log('LinkedIn sign-in initiation failed:', error)
+     * });
      * 
-     * @see {@link https://learn.microsoft.com/pt-br/linkedin/shared/authentication/authorization-code-flow}
+     * // After redirection, call the following in your redirect handling code:
+     * this.coffeeSocialRequest.validateLinkedInRedirect().subscribe({
+     *     next: () => console.log('You are now authenticated:', success),
+     *     error: () => console.log('Token validation failed:', error)
+     * });
      */
-    signInWithLinkedIn(): Observable<boolean> {
+     signInWithLinkedIn(): Observable<boolean> {
         if(!this.config?.auth?.linkedIn) {
             throw Error(
                 'LinkedIn Authentication Configuration Missing: Ensure that the "auth"' +
@@ -119,7 +176,7 @@ export class CoffeeSocialRequest {
         url += `response_type=code&`;
         url += `client_id=${this.config.auth.linkedIn.clientId}&`;
         url += `scope=${this.config.auth.linkedIn.scope ?? 'r_emailaddress,r_liteprofile'}&`;
-        url += `redirect_uri=${this.config.auth.linkedIn.redirectUrl}`;
+        url += `redirect_uri=${this.config.auth.linkedIn.redirectUri}`;
 
         return new Observable((observer) => {
 
@@ -151,41 +208,88 @@ export class CoffeeSocialRequest {
        
     }
 
-     /**
+    /**
      * Validates the LinkedIn sign-in by exchanging the received `code` for an access token,
-     * which is then stored for subsequent API requests.
+     * then submitting the token to backend to handle the LinkedIn authentication process.
      *
-     * @param {string} code - The authorization code received from LinkedIn.
-     * @param {any} [bodyData=null] - Optional. Additional body data to send in the request.
+     * @returns {Observable<boolean>} - An observable that emits `true` if the authentication is successful.
      *
-     * @returns {Observable<boolean>} - An observable that emits `true` if the token is successfully obtained and saved.
-     * 
      * @example
-     * validateLinkedInSignIn(code).subscribe(
-     *     success => console.log('Token validated:', success),
-     *     error => console.log('Token validation failed:', error)
-     * );
+     * validateLinkedInRedirect().subscribe({
+     *     next: () => console.log('You are now authenticated:', success),
+     *     error: () => console.log('Token validation failed:', error)
+     * });
      */
-    validateLinkedInSignIn(code: string, bodyData: any = null): Observable<boolean> {
-        const url = this.config?.baseApiUrl;
-        bodyData ? bodyData : { login: 'linkedIn', password: 'linkedIn' };
-        
-        return this.httpClient!.post<string>(`${url}/user/authenticate?linkedInCode=` + code, bodyData) 
-        .pipe(
-            map((data: any) => {
-                (window as any).linkCode = data.token;
-                AuthUtils.saveToken(data.token);
-                return true;
-            })
-        );
+    validateLinkedInRedirect(): Observable<boolean> {
+        return new Observable((observer) => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            
+            if (code) {
+                const url = this.config?.baseApiUrl;
+                const body = { authorizationCode: code };
+
+                this.httpClient.post<string>(`${url}/coffee/auth/linkedin`, body)
+                    .subscribe({
+                        next: (data: any) => {  
+                            // Check if data is a string and parse it if necessary
+                            if (typeof data === 'string') {
+                                data = JSON.parse(data);
+                            }
+
+                            (window as any).linkCode = data.token;
+                            AuthUtils.saveToken(data.token);
+                            observer.next(true);
+                            observer.complete();
+                        },
+                        error: (error) => {
+                            observer.error(error);
+                            observer.complete();
+                        }
+                    });
+            } else {
+                observer.error('No LinkedIn authorization code found in the URL.');
+                observer.complete();
+            }
+        });
+    }
+
+    // MICROSOFT AUTH METHODS
+
+    /**
+     * Initiates the Microsoft sign-in process using the MSAL service. This method
+     * handles the entire flow of authenticating with Microsoft, including opening
+     * a popup for user consent, retrieving the user profile, and handling any errors
+     * that might occur during the process.
+     */
+    signInWithMicrosoft(): Observable<boolean>  {
+        return new Observable((observer) => {
+            this._signInWithMicrosoft().subscribe({
+                next: (model) => {
+                    this.submitSocialMediaData('Microsoft', model)
+                    .subscribe({
+                        next: () => {
+                            observer.next(true);
+                            observer.complete();
+                        },
+                        error: (error) => {
+                            observer.error(error);
+                            observer.complete();
+                        }
+                    });
+                },
+                error: (error) => {
+                    observer.error(error);
+                    observer.complete();
+                }
+            });
+        });
     }
 
     /**
      * A private method that performs the Microsoft login operation. It uses the MSAL
      * service to open a login popup and requests access tokens for the specified scopes.
      * On successful login, it fetches the user's profile picture from Microsoft Graph API.
-     *
-     * @returns {Observable<CoffeeAuthSocial>} - An observable that emits the authenticated user's data.
      */
     private _signInWithMicrosoft(): Observable<CoffeeAuthSocial> {
         return new Observable((observer) => {
@@ -269,24 +373,21 @@ export class CoffeeSocialRequest {
         });
     }
 
+    // COMMON SUBMISSION METHOD
+
     /**
      * Handles the submission of social media authentication data to the server.
      * This method is responsible for sending the user's information, including
-     * their profile picture, to a designated server endpoint for either Google or
-     * Microsoft sign-in processes.
-     *
-     * @param {string} type - The type of social media ('Google' or 'Microsoft').
-     * @param {CoffeeAuthSocial} user - The user's authentication data.
-     *
-     * @returns {Observable<boolean>} - An observable that emits `true` if the data is successfully submitted.
+     * their profile picture, to a designated server endpoint for either Google,
+     * Microsoft, or LinkedIn sign-in processes.
      */
-    private _signInWithSocialMedia(
-        type: 'Google' | 'Microsoft', 
+    private submitSocialMediaData(
+        type: 'Google' | 'Microsoft' | 'LinkedIn', 
         user: CoffeeAuthSocial
     ): Observable<boolean> {
         
         return new Observable((observer) => {
-            var file = null;
+            let file = null;
         
             if(user.image != null) {
                 file = new File(
@@ -333,5 +434,4 @@ export class CoffeeSocialRequest {
             });
         });
     }
-
 }
