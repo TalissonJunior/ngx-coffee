@@ -42,15 +42,18 @@ this can be achieve be running the command below:
 will output coffee-ssr.ts file on root directory with:
 
 ```typescript
-import { runSsrServer } from 'ngx-coffee-ssr';
+import 'zone.js/node'; 
 import { AppServerModule } from './src/app/app.server.module';
 
-runSsrServer({
-  serverModule: AppServerModule,
-  disableLogs: false, // Set to true to disable logging
-  appName: 'your-app-name', // Optional: Name used for cache key prefix
-  refreshTimeInSeconds: 2400 // Optional: Time in seconds to refresh cache (default: 40 minutes)
-});
+if (typeof window === 'undefined') {
+  const { runSsrServer } = require('ngx-coffee-ssr');
+  
+  runSsrServer({
+    serverModule: AppServerModule,
+    disableLogs: false,
+    appName: '${projectName.toLowerCase()}'
+  });
+}
 ```
 
 ### Commands
