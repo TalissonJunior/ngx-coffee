@@ -1,10 +1,10 @@
 import 'zone.js/node';
 import { APP_BASE_HREF } from '@angular/common';
 import { ngExpressEngine } from '@nguniversal/express-engine';
-import * as express from 'express';
+import express from 'express';
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
-import * as NodeCache from 'node-cache';
+import NodeCache from 'node-cache';
 import { CoffeeUtil } from './public-api';
 import { request } from 'http';
 import { Type } from '@angular/core';
