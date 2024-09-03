@@ -22,11 +22,11 @@ npm install ngx-coffee-ssr
 Also checkout the  CoffeeSsrCli library:
 
 ```sh
-npm install coffee-ssr-cli
+npm install coffee-ssr
 ```
 
 this tool helps you configure your project without writing a single line of code,
-everytime you see coffee-ssr it is related to coffee-ssr-cli
+everytime you see coffee-ssr it is related to coffee-ssr
 
 ## Usage
 
